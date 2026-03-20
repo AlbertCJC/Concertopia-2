@@ -1,19 +1,17 @@
 extends Control
-# Onboarding Screen 3 of 3 — "Get Started"
-# Marks onboarding complete so future launches go straight to login.
 
-@onready var next_button: Button   = $CenterContainer/VBoxContainer/"Log In2"
-@onready var title_label: Label    = $CenterContainer/VBoxContainer/"Log In"
-@onready var email_field: LineEdit = $CenterContainer/VBoxContainer/Email
-@onready var pass_field: LineEdit  = $CenterContainer/VBoxContainer/Passwowrd
-@onready var signup_label: Label   = $CenterContainer/VBoxContainer/Label
-@onready var or_label: Label       = $CenterContainer/VBoxContainer/continue
+@onready var next_button: Button       = $CenterContainer/VBoxContainer/"Log In2"
+@onready var title_label: Label        = $CenterContainer/VBoxContainer/"Log In"
+@onready var email_field: LineEdit     = $CenterContainer/VBoxContainer/Email
+@onready var pass_field: LineEdit      = $CenterContainer/VBoxContainer/Passwowrd
+@onready var signup_label: Label       = $CenterContainer/VBoxContainer/Label
+@onready var or_label: Label           = $CenterContainer/VBoxContainer/continue
 @onready var social_box: HBoxContainer = $CenterContainer/VBoxContainer/HBoxContainer
 
-const DOT_ACTIVE  := Color(1.0, 1.0, 1.0, 1.0)
+const DOT_ACTIVE   := Color(1.0, 1.0, 1.0, 1.0)
 const DOT_INACTIVE := Color(1.0, 1.0, 1.0, 0.3)
-const LOGIN_SCENE := "res://screens/login.tscn"
-const PREV_SCENE  := "res://screens/welcome_screen2.tscn"
+const LOGIN_SCENE  := "res://screens/login.tscn"
+const PREV_SCENE   := "res://screens/welcome_screen2.tscn"
 
 func _ready() -> void:
 	title_label.text = "🎟️  Never Miss a Show"
@@ -64,20 +62,20 @@ func _build_dots(active_index: int) -> void:
 
 func _go_next() -> void:
 	FirstLaunch.mark_onboarding_complete()
-	get_tree().change_scene_to_file(LOGIN_SCENE)
+	get_tree().change_scene_to_file.call_deferred(LOGIN_SCENE)
 
 func _on_back_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		get_tree().change_scene_to_file(PREV_SCENE)
+		get_tree().change_scene_to_file.call_deferred(PREV_SCENE)
 
 func _on_login_label_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		FirstLaunch.mark_onboarding_complete()
-		get_tree().change_scene_to_file(LOGIN_SCENE)
+		get_tree().change_scene_to_file.call_deferred(LOGIN_SCENE)
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventScreenDrag:
 		if event.relative.x < -60:
 			_go_next()
 		elif event.relative.x > 60:
-			get_tree().change_scene_to_file(PREV_SCENE)
+			get_tree().change_scene_to_file.call_deferred(PREV_SCENE)

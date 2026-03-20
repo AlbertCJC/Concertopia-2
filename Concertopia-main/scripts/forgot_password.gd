@@ -6,7 +6,7 @@ extends VBoxContainer
 var error_label: Label = null
 var info_label: Label = null
 
-const LOGIN_SCENE := "res://screens/login.tscn"
+const LOGIN_SCENE      := "res://screens/login.tscn"
 const INPUT_CODE_SCENE := "res://screens/inputcode.tscn"
 
 func _ready() -> void:
@@ -14,13 +14,10 @@ func _ready() -> void:
 	submit_button.pressed.connect(_on_submit_pressed)
 	cancel_button.pressed.connect(_on_cancel_pressed)
 	email_field.text_submitted.connect(_on_email_submitted)
-
 	AuthManager.reset_code_sent.connect(_on_code_sent)
-
 	_ensure_labels()
 
 func _ensure_labels() -> void:
-	# Error label (red)
 	error_label = Label.new()
 	error_label.name = "ErrorLabel"
 	error_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -30,7 +27,6 @@ func _ensure_labels() -> void:
 	add_child(error_label)
 	move_child(error_label, submit_button.get_index())
 
-	# Info label (shows simulated code in green)
 	info_label = Label.new()
 	info_label.name = "InfoLabel"
 	info_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -54,7 +50,6 @@ func _attempt_send() -> void:
 	if "@" not in email or "." not in email.split("@")[-1]:
 		_show_error("Please enter a valid email address.")
 		return
-
 	_show_error("")
 	submit_button.disabled = true
 	submit_button.text = "Sending..."
@@ -63,18 +58,16 @@ func _attempt_send() -> void:
 func _on_code_sent(email: String, code: String) -> void:
 	submit_button.disabled = false
 	submit_button.text = "Submit"
-	# In production, this code would be emailed. We display it here for simulation.
-	info_label.text = "A reset code has been sent to %s.\n[DEV] Your code is: %s" % [email, code]
+	info_label.text = "Code sent to %s\n[DEV] Code: %s" % [email, code]
 	info_label.visible = true
-	# Short delay then navigate to the code entry screen
 	await get_tree().create_timer(2.0).timeout
-	get_tree().change_scene_to_file(INPUT_CODE_SCENE)
+	get_tree().change_scene_to_file.call_deferred(INPUT_CODE_SCENE)
 
 func _on_cancel_pressed() -> void:
-	get_tree().change_scene_to_file(LOGIN_SCENE)
+	get_tree().change_scene_to_file.call_deferred(LOGIN_SCENE)
 
 func _show_error(message: String) -> void:
 	if error_label == null:
 		return
-	error_label.text = message
+	error_label.text    = message
 	error_label.visible = not message.is_empty()

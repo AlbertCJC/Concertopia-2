@@ -8,9 +8,6 @@ var success_label: Label = null
 
 const LOGIN_SCENE := "res://screens/login.tscn"
 
-const EYE_OPEN   := preload("res://icons/eye.png")
-const EYE_CLOSED := preload("res://icons/eye_closed.svg")
-
 func _ready() -> void:
 	new_password_field.secret = true
 	new_password_field.placeholder_text = "New Password"
@@ -29,17 +26,19 @@ func _ready() -> void:
 	_ensure_labels()
 
 func _setup_eye_toggle(field: LineEdit) -> void:
-	field.right_icon = EYE_CLOSED
+	var eye = load("res://icons/eye.png") as Texture2D
+	if eye == null:
+		return
+	field.right_icon = eye
+	field.secret = true
 	field.gui_input.connect(func(event: InputEvent) -> void:
 		if not (event is InputEventMouseButton):
 			return
 		if not (event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
 			return
-		var icon_zone := field.size.x - 40.0
-		if event.position.x < icon_zone:
+		if event.position.x < field.size.x - 40.0:
 			return
 		field.secret = not field.secret
-		field.right_icon = EYE_OPEN if not field.secret else EYE_CLOSED
 	)
 
 func _ensure_labels() -> void:
@@ -89,7 +88,7 @@ func _on_password_changed() -> void:
 	submit_button.text = "Submit"
 	success_label.visible = true
 	await get_tree().create_timer(2.0).timeout
-	get_tree().change_scene_to_file(LOGIN_SCENE)
+	get_tree().change_scene_to_file.call_deferred(LOGIN_SCENE)
 
 func _on_password_change_failed(reason: String) -> void:
 	submit_button.disabled = false

@@ -14,13 +14,23 @@ signal login_success(user: Dictionary)
 signal login_failed(reason: String)
 signal signup_success(user: Dictionary)
 signal signup_failed(reason: String)
-signal reset_code_sent(email: String, code: String)   # exposes code so UI can display it (simulate email)
+signal reset_code_sent(email: String, code: String)
 signal reset_code_verified()
 signal reset_code_invalid()
 signal password_changed()
 signal password_change_failed(reason: String)
 
+# ── Test accounts (always available in memory) ────────────────────────────────
+const TEST_ACCOUNTS := {
+	"test@test.com": { "password": "123456", "display_name": "Tester" },
+	"admin@concertopia.com": { "password": "admin123", "display_name": "Admin" },
+	"demo@demo.com": { "password": "demo123", "display_name": "Demo User" },
+}
+
 func _ready() -> void:
+	# Seed test accounts first, then overlay any saved real accounts on top
+	for email in TEST_ACCOUNTS:
+		_users[email] = TEST_ACCOUNTS[email].duplicate()
 	_load_users()
 
 # ── Registration ──────────────────────────────────────────────────────────────
@@ -75,13 +85,6 @@ func is_logged_in() -> bool:
 
 func send_reset_code(email: String) -> bool:
 	email = email.strip_edges().to_lower()
-	if not _users.has(email):
-		# Don't reveal whether email exists — silently succeed (security best practice)
-		# But still emit so UI can navigate forward
-		_pending_reset_email = email
-		_pending_reset_code = _generate_code()
-		reset_code_sent.emit(email, _pending_reset_code)
-		return true
 	_pending_reset_email = email
 	_pending_reset_code = _generate_code()
 	reset_code_sent.emit(email, _pending_reset_code)
@@ -91,9 +94,8 @@ func verify_reset_code(code: String) -> bool:
 	if code.strip_edges() == _pending_reset_code:
 		reset_code_verified.emit()
 		return true
-	else:
-		reset_code_invalid.emit()
-		return false
+	reset_code_invalid.emit()
+	return false
 
 func change_password(new_password: String, confirm_password: String) -> bool:
 	if new_password.length() < 6:
@@ -102,10 +104,17 @@ func change_password(new_password: String, confirm_password: String) -> bool:
 	if new_password != confirm_password:
 		password_change_failed.emit("Passwords do not match.")
 		return false
-	if _pending_reset_email.is_empty() or not _users.has(_pending_reset_email):
+	if _pending_reset_email.is_empty():
 		password_change_failed.emit("Session expired. Please restart the reset process.")
 		return false
-	_users[_pending_reset_email]["password"] = new_password
+	# If email doesn't exist yet (new user reset flow), create the entry
+	if not _users.has(_pending_reset_email):
+		_users[_pending_reset_email] = {
+			"password": new_password,
+			"display_name": _pending_reset_email.split("@")[0]
+		}
+	else:
+		_users[_pending_reset_email]["password"] = new_password
 	_save_users()
 	_pending_reset_email = ""
 	_pending_reset_code = ""
@@ -115,9 +124,14 @@ func change_password(new_password: String, confirm_password: String) -> bool:
 # ── Persistence ───────────────────────────────────────────────────────────────
 
 func _save_users() -> void:
+	# Only save non-test accounts to disk
+	var to_save: Dictionary = {}
+	for email in _users:
+		if not TEST_ACCOUNTS.has(email):
+			to_save[email] = _users[email]
 	var file = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if file:
-		file.store_string(JSON.stringify(_users))
+		file.store_string(JSON.stringify(to_save))
 		file.close()
 
 func _load_users() -> void:
@@ -129,7 +143,9 @@ func _load_users() -> void:
 		file.close()
 		var result = JSON.parse_string(text)
 		if result is Dictionary:
-			_users = result
+			# Merge saved accounts on top of in-memory ones
+			for email in result:
+				_users[email] = result[email]
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 

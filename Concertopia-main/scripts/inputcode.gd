@@ -1,9 +1,9 @@
 extends VBoxContainer
 
-@onready var box1: LineEdit    = $HBoxContainer/box1
-@onready var box2: LineEdit    = $HBoxContainer/box2
-@onready var box3: LineEdit    = $HBoxContainer/box3
-@onready var box4: LineEdit    = $HBoxContainer/box4
+@onready var box1: LineEdit        = $HBoxContainer/box1
+@onready var box2: LineEdit        = $HBoxContainer/box2
+@onready var box3: LineEdit        = $HBoxContainer/box3
+@onready var box4: LineEdit        = $HBoxContainer/box4
 @onready var submit_button: Button = $submit
 @onready var cancel_button: Button = $cancel
 var error_label: Label = null
@@ -18,9 +18,6 @@ func _ready() -> void:
 	_configure_box(box3)
 	_configure_box(box4)
 
-	# In Godot 4, bind() appends AFTER the signal's own args.
-	# text_changed emits (new_text: String), so bound args come after.
-	# Signature: _on_box_changed(new_text, current_box, next_box)
 	box1.text_changed.connect(_on_box_changed.bind(box1, box2))
 	box2.text_changed.connect(_on_box_changed.bind(box2, box3))
 	box3.text_changed.connect(_on_box_changed.bind(box3, box4))
@@ -40,7 +37,6 @@ func _configure_box(box: LineEdit) -> void:
 	box.alignment  = HORIZONTAL_ALIGNMENT_CENTER
 	box.context_menu_enabled = false
 
-# text_changed(new_text) + bind(current_box, next_box)
 func _on_box_changed(new_text: String, current_box: LineEdit, next_box: LineEdit) -> void:
 	if new_text.length() == 1:
 		if not new_text.is_valid_int():
@@ -76,7 +72,7 @@ func _attempt_verify() -> void:
 func _on_code_verified() -> void:
 	submit_button.disabled = false
 	submit_button.text = "Submit"
-	get_tree().change_scene_to_file(CHANGE_PASS_SCENE)
+	get_tree().change_scene_to_file.call_deferred(CHANGE_PASS_SCENE)
 
 func _on_code_invalid() -> void:
 	submit_button.disabled = false
@@ -89,7 +85,7 @@ func _on_code_invalid() -> void:
 	box1.grab_focus()
 
 func _on_cancel_pressed() -> void:
-	get_tree().change_scene_to_file(FORGOT_SCENE)
+	get_tree().change_scene_to_file.call_deferred(FORGOT_SCENE)
 
 func _ensure_error_label() -> void:
 	error_label = Label.new()

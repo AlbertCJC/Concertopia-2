@@ -1,6 +1,4 @@
 extends Control
-# Home screen — shown after successful login or signup.
-# Expand this scene with your main app content (concert listings, etc.)
 
 const LOGIN_SCENE := "res://screens/login.tscn"
 
@@ -12,13 +10,11 @@ func _ready() -> void:
 	_build_ui()
 
 func _build_ui() -> void:
-	# ── Background ────────────────────────────────────────────────────────────
 	var bg := ColorRect.new()
 	bg.color = Color(0.08, 0.06, 0.14)
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
-	# ── Top bar ───────────────────────────────────────────────────────────────
 	var top_bg := PanelContainer.new()
 	top_bg.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
 	top_bg.custom_minimum_size = Vector2(0, 64)
@@ -57,7 +53,6 @@ func _build_ui() -> void:
 	_logout_button.pressed.connect(_on_logout)
 	btn_margin.add_child(_logout_button)
 
-	# ── Scrollable content ────────────────────────────────────────────────────
 	var scroll := ScrollContainer.new()
 	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	scroll.offset_top = 64
@@ -81,9 +76,8 @@ func _build_ui() -> void:
 	inner.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	margin.add_child(inner)
 
-	# ── Welcome heading ───────────────────────────────────────────────────────
-	var user      := AuthManager.current_user
-	var name_str  := user.get("display_name", "there")
+	var user: Dictionary = AuthManager.current_user
+	var name_str: String = user.get("display_name", "there")
 
 	_welcome_label = Label.new()
 	_welcome_label.text = "Hey, %s! 👋" % name_str
@@ -98,24 +92,22 @@ func _build_ui() -> void:
 	sub.add_theme_font_size_override("font_size", 15)
 	inner.add_child(sub)
 
-	# ── Upcoming concerts ─────────────────────────────────────────────────────
 	_add_section_label(inner, "🔥 Upcoming Concerts")
-	var upcoming := [
+	var upcoming: Array[Dictionary] = [
 		{ "name": "The Midnight",    "venue": "SM Mall of Asia Arena", "date": "Apr 5, 2026",  "genre": "Synthwave" },
 		{ "name": "Ben&Ben",         "venue": "Araneta Coliseum",      "date": "Apr 12, 2026", "genre": "Folk Pop"  },
 		{ "name": "IV of Spades",    "venue": "Kia Theater",           "date": "Apr 19, 2026", "genre": "Funk Rock" },
 		{ "name": "December Avenue", "venue": "New Frontier Theater",  "date": "Apr 26, 2026", "genre": "OPM Rock"  },
 	]
-	for c in upcoming:
+	for c: Dictionary in upcoming:
 		inner.add_child(_make_concert_card(c))
 
-	# ── Recommended ───────────────────────────────────────────────────────────
 	_add_section_label(inner, "⭐ Recommended For You")
-	var recommended := [
+	var recommended: Array[Dictionary] = [
 		{ "name": "SB19", "venue": "Philippine Arena", "date": "May 3, 2026",  "genre": "P-Pop" },
 		{ "name": "UDD",  "venue": "Ynares Center",    "date": "May 10, 2026", "genre": "Indie" },
 	]
-	for c in recommended:
+	for c: Dictionary in recommended:
 		inner.add_child(_make_concert_card(c))
 
 func _add_section_label(parent: VBoxContainer, text: String) -> void:
@@ -126,7 +118,7 @@ func _add_section_label(parent: VBoxContainer, text: String) -> void:
 	parent.add_child(lbl)
 
 func _make_concert_card(data: Dictionary) -> PanelContainer:
-	var card  := PanelContainer.new()
+	var card := PanelContainer.new()
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	var style := StyleBoxFlat.new()
@@ -142,7 +134,6 @@ func _make_concert_card(data: Dictionary) -> PanelContainer:
 	vbox.add_theme_constant_override("separation", 6)
 	card.add_child(vbox)
 
-	# Name + genre row
 	var hbox := HBoxContainer.new()
 	vbox.add_child(hbox)
 
@@ -159,21 +150,18 @@ func _make_concert_card(data: Dictionary) -> PanelContainer:
 	genre_lbl.add_theme_color_override("font_color", Color(0.7, 0.5, 1.0))
 	hbox.add_child(genre_lbl)
 
-	# Venue
 	var venue_lbl := Label.new()
 	venue_lbl.text = "📍 " + data["venue"]
 	venue_lbl.add_theme_font_size_override("font_size", 13)
 	venue_lbl.add_theme_color_override("font_color", Color(1, 1, 1, 0.65))
 	vbox.add_child(venue_lbl)
 
-	# Date
 	var date_lbl := Label.new()
 	date_lbl.text = "🗓  " + data["date"]
 	date_lbl.add_theme_font_size_override("font_size", 13)
 	date_lbl.add_theme_color_override("font_color", Color(1, 1, 1, 0.5))
 	vbox.add_child(date_lbl)
 
-	# Book button
 	var book_btn := Button.new()
 	book_btn.text = "Book Tickets"
 	book_btn.size_flags_horizontal = Control.SIZE_SHRINK_END
@@ -193,4 +181,4 @@ func _make_concert_card(data: Dictionary) -> PanelContainer:
 
 func _on_logout() -> void:
 	AuthManager.logout()
-	get_tree().change_scene_to_file(LOGIN_SCENE)
+	get_tree().change_scene_to_file.call_deferred(LOGIN_SCENE)

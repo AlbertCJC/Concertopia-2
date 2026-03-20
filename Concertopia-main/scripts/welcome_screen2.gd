@@ -1,12 +1,11 @@
 extends Control
-# Onboarding Screen 2 of 3 — "Discover"
 
-@onready var next_button: Button   = $CenterContainer/VBoxContainer/"Log In2"
-@onready var title_label: Label    = $CenterContainer/VBoxContainer/"Log In"
-@onready var email_field: LineEdit = $CenterContainer/VBoxContainer/Email
-@onready var pass_field: LineEdit  = $CenterContainer/VBoxContainer/Passwowrd
-@onready var signup_label: Label   = $CenterContainer/VBoxContainer/Label
-@onready var or_label: Label       = $CenterContainer/VBoxContainer/continue
+@onready var next_button: Button       = $CenterContainer/VBoxContainer/"Log In2"
+@onready var title_label: Label        = $CenterContainer/VBoxContainer/"Log In"
+@onready var email_field: LineEdit     = $CenterContainer/VBoxContainer/Email
+@onready var pass_field: LineEdit      = $CenterContainer/VBoxContainer/Passwowrd
+@onready var signup_label: Label       = $CenterContainer/VBoxContainer/Label
+@onready var or_label: Label           = $CenterContainer/VBoxContainer/continue
 @onready var social_box: HBoxContainer = $CenterContainer/VBoxContainer/HBoxContainer
 
 const DOT_ACTIVE   := Color(1.0, 1.0, 1.0, 1.0)
@@ -24,7 +23,6 @@ func _ready() -> void:
 	or_label.visible     = false
 	social_box.visible   = false
 
-	# Subtitle
 	var subtitle := Label.new()
 	subtitle.text = "Browse concerts by genre, artist, or venue.\nFind shows happening right in your city."
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -32,7 +30,6 @@ func _ready() -> void:
 	$CenterContainer/VBoxContainer.add_child(subtitle)
 	$CenterContainer/VBoxContainer.move_child(subtitle, title_label.get_index() + 1)
 
-	# Back label
 	var back_label := Label.new()
 	back_label.text = "← Back"
 	back_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -43,9 +40,7 @@ func _ready() -> void:
 	$CenterContainer/VBoxContainer.add_child(back_label)
 	$CenterContainer/VBoxContainer.move_child(back_label, next_button.get_index() + 1)
 
-	# Dots
 	_build_dots(1)
-
 	next_button.pressed.connect(_go_next)
 
 func _build_dots(active_index: int) -> void:
@@ -61,15 +56,15 @@ func _build_dots(active_index: int) -> void:
 	$CenterContainer/VBoxContainer.move_child(hbox, next_button.get_index())
 
 func _go_next() -> void:
-	get_tree().change_scene_to_file(NEXT_SCENE)
+	get_tree().change_scene_to_file.call_deferred(NEXT_SCENE)
 
 func _on_back_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		get_tree().change_scene_to_file(PREV_SCENE)
+		get_tree().change_scene_to_file.call_deferred(PREV_SCENE)
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventScreenDrag:
 		if event.relative.x < -60:
 			_go_next()
 		elif event.relative.x > 60:
-			get_tree().change_scene_to_file(PREV_SCENE)
+			get_tree().change_scene_to_file.call_deferred(PREV_SCENE)

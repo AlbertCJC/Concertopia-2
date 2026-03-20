@@ -11,9 +11,6 @@ const HOME_SCENE   := "res://screens/home.tscn"
 const SIGNUP_SCENE := "res://screens/signup.tscn"
 const FORGOT_SCENE := "res://screens/forgot password .tscn"
 
-const EYE_OPEN   := preload("res://icons/eye.png")
-const EYE_CLOSED := preload("res://icons/eye_closed.svg")
-
 func _ready() -> void:
 	password_field.secret = true
 	password_field.placeholder_text = "Password"
@@ -35,17 +32,19 @@ func _ready() -> void:
 	AuthManager.login_failed.connect(_on_login_failed)
 
 func _setup_eye_toggle(field: LineEdit) -> void:
-	field.right_icon = EYE_CLOSED
+	var eye = load("res://icons/eye.png") as Texture2D
+	if eye == null:
+		return
+	field.right_icon = eye
+	field.secret = true
 	field.gui_input.connect(func(event: InputEvent) -> void:
 		if not (event is InputEventMouseButton):
 			return
 		if not (event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
 			return
-		var icon_zone := field.size.x - 40.0
-		if event.position.x < icon_zone:
+		if event.position.x < field.size.x - 40.0:
 			return
 		field.secret = not field.secret
-		field.right_icon = EYE_OPEN if not field.secret else EYE_CLOSED
 	)
 
 func _create_forgot_label() -> void:
@@ -96,7 +95,7 @@ func _attempt_login() -> void:
 func _on_login_success(_user: Dictionary) -> void:
 	login_button.disabled = false
 	login_button.text = "Log In"
-	get_tree().change_scene_to_file(HOME_SCENE)
+	get_tree().change_scene_to_file.call_deferred(HOME_SCENE)
 
 func _on_login_failed(reason: String) -> void:
 	login_button.disabled = false
@@ -105,11 +104,11 @@ func _on_login_failed(reason: String) -> void:
 
 func _on_signup_label_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		get_tree().change_scene_to_file(SIGNUP_SCENE)
+		get_tree().change_scene_to_file.call_deferred(SIGNUP_SCENE)
 
 func _on_forgot_label_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		get_tree().change_scene_to_file(FORGOT_SCENE)
+		get_tree().change_scene_to_file.call_deferred(FORGOT_SCENE)
 
 func _show_error(message: String) -> void:
 	if error_label == null:
