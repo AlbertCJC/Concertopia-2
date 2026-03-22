@@ -15,6 +15,6 @@ Concertopia-main/android/build/.gradle/
 Concertopia-main/android/build/generated/
 Concertopia-main/android/build/intermediates/
 
-# OS
+    # OS
 .DS_Store
 Thumbs.db
