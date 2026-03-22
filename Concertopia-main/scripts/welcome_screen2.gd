@@ -7,26 +7,31 @@ func _ready() -> void:
 	_build_ui()
 
 func _build_ui() -> void:
-	var pixel_font := load("res://Pixelify_Sans/static/PixelifySans-Bold.ttf") as FontFile
+	var pixel_font := load(
+		"res://Pixelify_Sans/static/PixelifySans-Bold.ttf"
+	) as FontFile
 
 	var bg := ColorRect.new()
-	bg.color = Color(0, 0, 0)
+	bg.color        = Color(0, 0, 0)
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(bg)
 
-	var centre := VBoxContainer.new()
-	centre.alignment = BoxContainer.ALIGNMENT_CENTER
-	centre.add_theme_constant_override("separation", 8)
-	centre.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	centre.offset_left   = 32
-	centre.offset_right  = -32
-	centre.offset_top    = 20
-	centre.offset_bottom = -64
-	centre.mouse_filter  = Control.MOUSE_FILTER_IGNORE
-	add_child(centre)
+	var margin := MarginContainer.new()
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left",   32)
+	margin.add_theme_constant_override("margin_right",  32)
+	margin.add_theme_constant_override("margin_top",    20)
+	margin.add_theme_constant_override("margin_bottom", 64)
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(margin)
 
-	# "ConcerTopia"
+	var centre := VBoxContainer.new()
+	centre.alignment    = BoxContainer.ALIGNMENT_CENTER
+	centre.add_theme_constant_override("separation", 8)
+	centre.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	margin.add_child(centre)
+
 	var logo := Label.new()
 	logo.text = "ConcerTopia"
 	logo.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -39,10 +44,9 @@ func _build_ui() -> void:
 
 	var sp1 := Control.new()
 	sp1.custom_minimum_size = Vector2(0, 4)
-	sp1.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	sp1.mouse_filter        = Control.MOUSE_FILTER_IGNORE
 	centre.add_child(sp1)
 
-	# "Your Concert, Your Way"
 	var heading := Label.new()
 	heading.text = "Your Concert,\nYour Way"
 	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -53,7 +57,6 @@ func _build_ui() -> void:
 	heading.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	centre.add_child(heading)
 
-	# "Here's what's waiting for you :"
 	var sub := Label.new()
 	sub.text = "Here's what's waiting for you :"
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -66,22 +69,21 @@ func _build_ui() -> void:
 
 	var sp2 := Control.new()
 	sp2.custom_minimum_size = Vector2(0, 6)
-	sp2.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	sp2.mouse_filter        = Control.MOUSE_FILTER_IGNORE
 	centre.add_child(sp2)
 
-	# ── Feature list — centred block with equal padding both sides ────────────
 	var feature_margin := MarginContainer.new()
-	feature_margin.add_theme_constant_override("margin_left",  80)
-	feature_margin.add_theme_constant_override("margin_right", 80)
-	feature_margin.add_theme_constant_override("margin_top",    0)
-	feature_margin.add_theme_constant_override("margin_bottom", 0)
-	feature_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	feature_margin.add_theme_constant_override("margin_left",   80)
+	feature_margin.add_theme_constant_override("margin_right",  80)
+	feature_margin.add_theme_constant_override("margin_top",     0)
+	feature_margin.add_theme_constant_override("margin_bottom",  0)
+	feature_margin.mouse_filter          = Control.MOUSE_FILTER_IGNORE
 	feature_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	centre.add_child(feature_margin)
 
 	var feature_vbox := VBoxContainer.new()
 	feature_vbox.add_theme_constant_override("separation", 6)
-	feature_vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	feature_vbox.mouse_filter          = Control.MOUSE_FILTER_IGNORE
 	feature_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	feature_margin.add_child(feature_vbox)
 
@@ -94,10 +96,9 @@ func _build_ui() -> void:
 	]
 	for line : String in features:
 		var lbl := Label.new()
-		lbl.text = line
-		# Centre-aligned so text reads symmetrically within the padded block
-		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		lbl.text                  = line
+		lbl.horizontal_alignment  = HORIZONTAL_ALIGNMENT_CENTER
+		lbl.autowrap_mode         = TextServer.AUTOWRAP_WORD_SMART
 		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		lbl.add_theme_color_override("font_color", Color(1, 1, 1))
 		lbl.add_theme_font_size_override("font_size", 12)
@@ -109,26 +110,28 @@ func _build_ui() -> void:
 	_build_bottom_bar(pixel_font, 1)
 
 func _build_bottom_bar(pixel_font: FontFile, active_dot: int) -> void:
+	# ── Dot indicator: thin wide pills — 40×5 active, 16×5 inactive ──────────
 	var dot_row := HBoxContainer.new()
 	dot_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	dot_row.add_theme_constant_override("separation", 8)
+	dot_row.add_theme_constant_override("separation", 6)
 	dot_row.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	dot_row.offset_bottom = -28
-	dot_row.offset_top    = -52
+	dot_row.offset_bottom = -32
+	dot_row.offset_top    = -48
 	dot_row.mouse_filter  = Control.MOUSE_FILTER_IGNORE
 	add_child(dot_row)
 
 	for i in 3:
 		var dot := PanelContainer.new()
-		var w : float = 28.0 if i == active_dot else 10.0
-		dot.custom_minimum_size = Vector2(w, 10)
-		dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var w : float = 60.0 if i == active_dot else 24.0
+		dot.custom_minimum_size = Vector2(w, 5)
+		dot.mouse_filter        = Control.MOUSE_FILTER_IGNORE
 		var s := StyleBoxFlat.new()
-		s.bg_color = Color(1, 1, 1, 1.0) if i == active_dot else Color(1, 1, 1, 0.4)
-		s.set_corner_radius_all(6)
+		s.bg_color = Color(1, 1, 1, 1.0) if i == active_dot else Color(1, 1, 1, 0.35)
+		s.set_corner_radius_all(8)
 		dot.add_theme_stylebox_override("panel", s)
 		dot_row.add_child(dot)
 
+	# ── Prev button ───────────────────────────────────────────────────────────
 	var prev := Label.new()
 	prev.text = "Prev"
 	prev.add_theme_color_override("font_color", Color(1, 1, 1))
@@ -143,11 +146,14 @@ func _build_bottom_bar(pixel_font: FontFile, active_dot: int) -> void:
 	prev.mouse_filter  = Control.MOUSE_FILTER_STOP
 	prev.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	prev.gui_input.connect(func(e: InputEvent) -> void:
-		if e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT:
-			ScreenTransition.go(PREV_SCENE, "right")
+		if e is InputEventMouseButton:
+			var mb := e as InputEventMouseButton
+			if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
+				ScreenTransition.go(PREV_SCENE, "right")
 	)
 	add_child(prev)
 
+	# ── Next button ───────────────────────────────────────────────────────────
 	var next := Label.new()
 	next.text = "Next"
 	next.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -163,8 +169,10 @@ func _build_bottom_bar(pixel_font: FontFile, active_dot: int) -> void:
 	next.mouse_filter  = Control.MOUSE_FILTER_STOP
 	next.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	next.gui_input.connect(func(e: InputEvent) -> void:
-		if e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT:
-			ScreenTransition.go(NEXT_SCENE, "left")
+		if e is InputEventMouseButton:
+			var mb := e as InputEventMouseButton
+			if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
+				ScreenTransition.go(NEXT_SCENE, "left")
 	)
 	add_child(next)
 
@@ -175,7 +183,6 @@ const SWIPE_SLOP   : float = 12.0
 func _input(event: InputEvent) -> void:
 	if ScreenTransition._active:
 		return
-
 	if event is InputEventScreenTouch:
 		var e : InputEventScreenTouch = event
 		if e.pressed:
@@ -183,7 +190,6 @@ func _input(event: InputEvent) -> void:
 			_swipe_started = true
 		else:
 			_swipe_started = false
-
 	elif event is InputEventMouseButton:
 		var e : InputEventMouseButton = event
 		if e.button_index == MOUSE_BUTTON_LEFT:
@@ -192,7 +198,6 @@ func _input(event: InputEvent) -> void:
 				_swipe_started = true
 			else:
 				_swipe_started = false
-
 	elif event is InputEventScreenDrag:
 		var e : InputEventScreenDrag = event
 		if _swipe_started:
@@ -203,7 +208,6 @@ func _input(event: InputEvent) -> void:
 					ScreenTransition.go(NEXT_SCENE, "left")
 				else:
 					ScreenTransition.go(PREV_SCENE, "right")
-
 	elif event is InputEventMouseMotion:
 		var e : InputEventMouseMotion = event
 		if _swipe_started:
