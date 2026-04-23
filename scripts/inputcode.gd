@@ -26,8 +26,10 @@ func _ready() -> void:
 	submit_button.pressed.connect(_on_submit_pressed)
 	cancel_button.pressed.connect(_on_cancel_pressed)
 
-	AuthManager.reset_code_verified.connect(_on_code_verified)
-	AuthManager.reset_code_invalid.connect(_on_code_invalid)
+	if not AuthManager.reset_code_verified.is_connected(_on_code_verified):
+		AuthManager.reset_code_verified.connect(_on_code_verified)
+	if not AuthManager.reset_code_invalid.is_connected(_on_code_invalid):
+		AuthManager.reset_code_invalid.connect(_on_code_invalid)
 
 	_ensure_error_label()
 	box1.grab_focus()
@@ -101,3 +103,9 @@ func _show_error(message: String) -> void:
 		return
 	error_label.text    = message
 	error_label.visible = not message.is_empty()
+
+func _exit_tree() -> void:
+	if AuthManager.reset_code_verified.is_connected(_on_code_verified):
+		AuthManager.reset_code_verified.disconnect(_on_code_verified)
+	if AuthManager.reset_code_invalid.is_connected(_on_code_invalid):
+		AuthManager.reset_code_invalid.disconnect(_on_code_invalid)

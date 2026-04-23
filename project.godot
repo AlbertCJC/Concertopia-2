@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Concertopia"
-run/main_scene="res://characterpreset/characterselect/bootstrap.tscn"
+run/main_scene="res://screens/bootstrap.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icons/icon.svg"
 
@@ -20,6 +20,7 @@ config/icon="res://icons/icon.svg"
 AuthManager="*res://scripts/auth_manager.gd"
 FirstLaunch="*res://scripts/first_launch.gd"
 ScreenTransition="*res://scripts/screen_transition.gd"
+RoomRegistry="*res://scripts/room_registry.gd"
 
 [display]
 

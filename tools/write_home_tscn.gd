@@ -732,21 +732,8 @@ func _style_door(door : Control, col : Color) -> void:
 
 # ── Character skin display ─────────────────────────────────────────────────────
 func _show_character() -> void:
-	var skin_path : String = AuthManager.current_user.get(
-		"character_skin", ""
-	)
-	if skin_path.is_empty():
-		_char_display.visible = false
-		return
-	var tex : Texture2D = load(skin_path) as Texture2D
-	if tex == null:
-		_char_display.visible = false
-		return
-	var atlas : AtlasTexture = AtlasTexture.new()
-	atlas.atlas = tex
-	atlas.region = Rect2(0.0, 0.0, 237.0, 351.0)
-	_char_display.texture = atlas
-	_char_display.visible = true
+	_char_display.texture = null
+	_char_display.visible = false
 
 # ── Slot sizing — positions each slot so its card is vp-width apart ───────────
 func _size_slots() -> void:

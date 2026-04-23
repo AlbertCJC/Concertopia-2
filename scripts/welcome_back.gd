@@ -1,6 +1,6 @@
 extends Control
 
-const HOME_SCENE : String = "res://screens/home.tscn"
+const HOME_SCENE      : String = "res://screens/home.tscn"
 
 func _ready() -> void:
 	_build_ui()
@@ -28,7 +28,6 @@ func _build_ui() -> void:
 	add_child(centre)
 
 	var welcome_lbl := Label.new()
-	welcome_lbl.name = "WelcomeLabel"
 	welcome_lbl.text = "Welcome to"
 	welcome_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	welcome_lbl.add_theme_color_override("font_color", Color(0.96, 0.42, 0.62))
@@ -40,7 +39,6 @@ func _build_ui() -> void:
 	centre.add_child(welcome_lbl)
 
 	var logo_lbl := Label.new()
-	logo_lbl.name = "LogoLabel"
 	logo_lbl.text = "ConcerTopia"
 	logo_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	logo_lbl.add_theme_color_override("font_color", Color(1, 1, 1))
@@ -59,7 +57,6 @@ func _build_ui() -> void:
 	var user : Dictionary = AuthManager.current_user
 	var name_str : String = user.get("display_name", "there")
 	var name_lbl := Label.new()
-	name_lbl.name = "NameLabel"
 	name_lbl.text = "Hey, %s!" % name_str
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_lbl.add_theme_color_override("font_color", Color(1, 1, 1))
@@ -71,7 +68,6 @@ func _build_ui() -> void:
 	centre.add_child(name_lbl)
 
 	var sub_lbl := Label.new()
-	sub_lbl.name = "SubLabel"
 	sub_lbl.text = "Ready to rock? 🎵"
 	sub_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	sub_lbl.add_theme_color_override("font_color", Color(0.96, 0.42, 0.62))
@@ -83,7 +79,6 @@ func _build_ui() -> void:
 	centre.add_child(sub_lbl)
 
 	var skip_lbl := Label.new()
-	skip_lbl.name = "SkipLabel"
 	skip_lbl.text = "Tap anywhere to continue"
 	skip_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	skip_lbl.add_theme_color_override("font_color", Color(1, 1, 1, 0.35))
@@ -104,7 +99,7 @@ func _build_ui() -> void:
 		if e is InputEventMouseButton:
 			var mb := e as InputEventMouseButton
 			if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
-				_go_home()
+				_proceed()
 	)
 
 func _animate_in(
@@ -123,17 +118,12 @@ func _animate_in(
 	t.tween_property(sub_lbl,     "modulate:a", 1.0, 0.35)
 	t.tween_property(skip_lbl,    "modulate:a", 1.0, 0.3)
 	t.tween_interval(1.5)
-	t.tween_callback(_go_home)
+	t.tween_callback(_proceed)
 
-# ── Navigate to home ──────────────────────────────────────────────────────────
-# Guards against being called twice (from tap + auto-timer).
-# Uses change_scene_to_file.call_deferred directly — no ScreenTransition,
-# no fade tween that could race the scene tree teardown.
+var _proceeding : bool = false
 
-var _going_home : bool = false
-
-func _go_home() -> void:
-	if _going_home:
+func _proceed() -> void:
+	if _proceeding:
 		return
-	_going_home = true
+	_proceeding = true
 	get_tree().change_scene_to_file.call_deferred(HOME_SCENE)

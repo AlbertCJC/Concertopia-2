@@ -25,8 +25,10 @@ func _ready() -> void:
 	submit_button.pressed.connect(_on_submit_pressed)
 	confirm_field.text_submitted.connect(_on_confirm_submitted)
 
-	AuthManager.password_changed.connect(_on_password_changed)
-	AuthManager.password_change_failed.connect(_on_password_change_failed)
+	if not AuthManager.password_changed.is_connected(_on_password_changed):
+		AuthManager.password_changed.connect(_on_password_changed)
+	if not AuthManager.password_change_failed.is_connected(_on_password_change_failed):
+		AuthManager.password_change_failed.connect(_on_password_change_failed)
 
 	_ensure_labels()
 
@@ -123,3 +125,9 @@ func _show_error(message: String) -> void:
 		return
 	error_label.text    = message
 	error_label.visible = not message.is_empty()
+
+func _exit_tree() -> void:
+	if AuthManager.password_changed.is_connected(_on_password_changed):
+		AuthManager.password_changed.disconnect(_on_password_changed)
+	if AuthManager.password_change_failed.is_connected(_on_password_change_failed):
+		AuthManager.password_change_failed.disconnect(_on_password_change_failed)

@@ -1,8 +1,8 @@
-[gd_scene format=3 uid="uid://char_skin_select"]
+[gd_scene format=3 uid="uid://dluq1it2b2gil"]
 
 [ext_resource type="Script" path="res://scripts/character_skin_select.gd" id="1_skinsel"]
 
-[node name="CharacterSkinSelect" type="Control"]
+[node name="CharacterSkinSelect" type="Control" unique_id=992521458]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
