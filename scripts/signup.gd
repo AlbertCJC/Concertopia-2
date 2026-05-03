@@ -5,6 +5,9 @@ extends VBoxContainer
 @onready var confirm_field  : LineEdit = $ConfirmPassword
 @onready var signup_button  : Button   = $"Log In2"
 @onready var login_label    : Label    = $Label
+@onready var google_icon    : TextureRect = $HBoxContainer/google
+@onready var facebook_icon  : TextureRect = $HBoxContainer/facebook
+
 var error_label : Label = null
 
 const USER_DETAILS_SCENE : String = "res://screens/user_details.tscn"
@@ -12,6 +15,10 @@ const LOGIN_SCENE    : String = "res://screens/login.tscn"
 
 const EYE_OPEN   : String = "res://icons/eye.png"
 const EYE_CLOSED : String = "res://icons/eye-closed.png"
+
+# ── Provider colours for spinner label ────────────────────────────────────────
+const COLOR_GOOGLE   : Color = Color(0.26, 0.52, 0.96)
+const COLOR_FACEBOOK : Color = Color(0.23, 0.35, 0.60)
 
 # ── Test Credentials ───────────────────────────────────────────────────────────
 const TEST_EMAIL    : String = "test_new@concertopia.com"
@@ -25,12 +32,17 @@ func _ready() -> void:
 	email_field.placeholder_text    = "Email"
 	password_field.right_icon       = null
 	confirm_field.right_icon        = null
+	
+	email_field.add_theme_color_override("caret_color", Color(0.1, 0.1, 0.1, 1))
+	password_field.add_theme_color_override("caret_color", Color(0.1, 0.1, 0.1, 1))
+	confirm_field.add_theme_color_override("caret_color", Color(0.1, 0.1, 0.1, 1))
 
 	login_label.mouse_filter = Control.MOUSE_FILTER_STOP
 	login_label.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
 	_setup_eye_toggle(password_field)
 	_setup_eye_toggle(confirm_field)
+	_setup_oauth_icons()
 
 	signup_button.pressed.connect(_on_signup_pressed)
 	login_label.gui_input.connect(_on_login_label_input)
@@ -44,8 +56,56 @@ func _ready() -> void:
 
 	AuthManager.signup_success.connect(_on_signup_success)
 	AuthManager.signup_failed.connect(_on_signup_failed)
+	AuthManager.login_success.connect(_on_login_success) # For OAuth
+	AuthManager.oauth_login_started.connect(_on_oauth_started)
 
 	_ensure_error_label()
+
+# ══════════════════════════════════════════════════════════════════════════════
+# OAuth icon setup
+# ══════════════════════════════════════════════════════════════════════════════
+func _setup_oauth_icons() -> void:
+	_make_icon_clickable(google_icon,   _on_google_pressed)
+	_make_icon_clickable(facebook_icon, _on_facebook_pressed)
+
+func _make_icon_clickable(icon: TextureRect, callback: Callable) -> void:
+	if icon == null: return
+	icon.mouse_filter = Control.MOUSE_FILTER_STOP
+	icon.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	icon.gui_input.connect(func(event: InputEvent) -> void:
+		if event is InputEventMouseButton:
+			var mb := event as InputEventMouseButton
+			if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
+				callback.call()
+	)
+
+func _on_google_pressed() -> void:
+	_show_error("")
+	AuthManager.login_with_google()
+
+func _on_facebook_pressed() -> void:
+	_show_error("")
+	AuthManager.login_with_facebook()
+
+func _on_oauth_started(provider: String) -> void:
+	var name_cap : String = provider.capitalize()
+	signup_button.disabled = true
+	_set_icons_enabled(false)
+	_show_error("Browser opened — sign in with %s…" % name_cap)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Signal handlers
+# ══════════════════════════════════════════════════════════════════════════════
+func _on_login_success(_user: Dictionary) -> void:
+	# Handled same as signup success for OAuth users
+	_on_signup_success(_user)
+
+func _set_icons_enabled(enabled: bool) -> void:
+	var alpha : float = 1.0 if enabled else 0.45
+	if google_icon   != null: google_icon.modulate.a   = alpha
+	if facebook_icon != null: facebook_icon.modulate.a = alpha
+	if google_icon   != null: google_icon.mouse_filter   = Control.MOUSE_FILTER_STOP if enabled else Control.MOUSE_FILTER_IGNORE
+	if facebook_icon != null: facebook_icon.mouse_filter = Control.MOUSE_FILTER_STOP if enabled else Control.MOUSE_FILTER_IGNORE
 
 func _input(event: InputEvent) -> void:
 	# Shift + T to fill test credentials

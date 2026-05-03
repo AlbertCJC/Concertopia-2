@@ -170,11 +170,6 @@ layout_mode = 2
 texture = ExtResource("7_fya5r")
 expand_mode = 3
 
-[node name="apple" type="TextureRect" parent="CenterContainer/VBoxContainer/HBoxContainer" unique_id=1521163421]
-layout_mode = 2
-texture = ExtResource("8_k5d40")
-expand_mode = 3
-
 [node name="facebook" type="TextureRect" parent="CenterContainer/VBoxContainer/HBoxContainer" unique_id=2133851674]
 layout_mode = 2
 texture = ExtResource("9_m1r6j")

@@ -109,35 +109,41 @@ func _build_ui() -> void:
 	_add_section_label(vbox, "ACCOUNT")
 
 	var user : Dictionary = AuthManager.current_user
-	var display_name : String = user.get("display_name","Guest")
-	var email_str    : String = user.get("email","")
-	var full_name    : String = user.get("full_name", "")
-	var age          : String = str(user.get("age", ""))
-	var bio          : String = user.get("bio", "")
+	var display_name = user.get("display_name", "Guest")
+	var email_str    = user.get("email", "")
+	var full_name    = user.get("full_name", "")
+	var age          = user.get("age", "")
+	var bio          = user.get("bio", "")
 
-	_add_info_row(vbox, "👤  Display Name", display_name)
-	_add_info_row(vbox, "📧  Email",        email_str)
+	display_name = str(display_name) if display_name != null else "Guest"
+	email_str = str(email_str) if email_str != null else ""
+	full_name = str(full_name) if full_name != null else ""
+	age = str(age) if age != null else ""
+	bio = str(bio) if bio != null else ""
+
+	_add_info_row(vbox, "> Display Name", display_name)
+	_add_info_row(vbox, "> Email",        email_str)
 	if !full_name.is_empty():
-		_add_info_row(vbox, "🏷️  Full Name", full_name)
+		_add_info_row(vbox, "> Full Name", full_name)
 	if age != "0" and !age.is_empty():
-		_add_info_row(vbox, "🎂  Age",       age)
+		_add_info_row(vbox, "> Age",       age)
 	if !bio.is_empty():
-		_add_info_row(vbox, "ℹ️  Bio",       bio)
+		_add_info_row(vbox, "> Bio",       bio)
 
 	_add_divider(vbox)
 
 	# ── App section ───────────────────────────────────────────────────────────
 	_add_section_label(vbox, "APP")
-	_add_toggle_row(vbox, "🔊  Sound Effects",    true)
-	_add_toggle_row(vbox, "🎵  Background Music",  true)
-	_add_toggle_row(vbox, "🔔  Notifications",     false)
+	_add_toggle_row(vbox, "> Sound Effects",    true)
+	_add_toggle_row(vbox, "> Background Music",  true)
+	_add_toggle_row(vbox, "> Notifications",     false)
 
 	_add_divider(vbox)
 
 	# ── Danger zone ───────────────────────────────────────────────────────────
 	_add_section_label(vbox, "ACCOUNT ACTIONS")
-	_add_action_btn(vbox, "🔒  Change Password", C_MUTED, Color(0.85, 0.85, 0.85), _on_change_password)
-	_add_action_btn(vbox, "🚪  Log Out",          C_RED,   C_RED_HV,               _on_logout)
+	_add_action_btn(vbox, "[ CHANGE PASSWORD ]", C_MUTED, Color(0.85, 0.85, 0.85), _on_change_password)
+	_add_action_btn(vbox, "[ LOG OUT ]",          C_RED,   C_RED_HV,               _on_logout)
 
 # ── UI helpers ─────────────────────────────────────────────────────────────────
 
@@ -216,8 +222,8 @@ func _add_toggle_row(parent: Control, label: String, default_on: bool) -> void:
 	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	lbl.add_theme_color_override("font_color", C_CREAM)
 	lbl.add_theme_font_size_override("font_size", 12)
-	if _body_font:
-		lbl.add_theme_font_override("font", _body_font)
+	if _pixel_font:
+		lbl.add_theme_font_override("font", _pixel_font)
 	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(lbl)
 
@@ -227,19 +233,30 @@ func _add_toggle_row(parent: Control, label: String, default_on: bool) -> void:
 	toggle.custom_minimum_size = Vector2(48, 26)
 	var ts := StyleBoxFlat.new()
 	ts.bg_color = C_PINK if default_on else Color(0.3, 0.3, 0.3)
-	ts.set_corner_radius_all(13)
+	ts.set_corner_radius_all(0)
+	ts.border_width_left = 2
+	ts.border_width_right = 2
+	ts.border_width_top = 2
+	ts.border_width_bottom = 2
+	ts.border_color = Color(1, 1, 1) if default_on else Color(0.3, 0.3, 0.3)
 	toggle.add_theme_stylebox_override("normal",  ts)
 	toggle.add_theme_stylebox_override("hover",   ts)
 	toggle.add_theme_stylebox_override("pressed", ts)
 	toggle.add_theme_color_override("font_color", Color(1, 1, 1))
-	toggle.add_theme_font_size_override("font_size", 10)
+	toggle.add_theme_font_size_override("font_size", 12)
+	if _pixel_font: toggle.add_theme_font_override("font", _pixel_font)
 	var is_on : bool = default_on
 	toggle.pressed.connect(func() -> void:
 		is_on = not is_on
 		toggle.text = "ON" if is_on else "OFF"
 		var new_style := StyleBoxFlat.new()
 		new_style.bg_color = C_PINK if is_on else Color(0.3, 0.3, 0.3)
-		new_style.set_corner_radius_all(13)
+		new_style.set_corner_radius_all(0)
+		new_style.border_width_left = 2
+		new_style.border_width_right = 2
+		new_style.border_width_top = 2
+		new_style.border_width_bottom = 2
+		new_style.border_color = Color(1, 1, 1) if is_on else Color(0.3, 0.3, 0.3)
 		toggle.add_theme_stylebox_override("normal",  new_style)
 		toggle.add_theme_stylebox_override("hover",   new_style)
 		toggle.add_theme_stylebox_override("pressed", new_style)
@@ -256,8 +273,8 @@ func _add_divider(parent: Control) -> void:
 # ── Actions ────────────────────────────────────────────────────────────────────
 
 func _on_change_password() -> void:
-	var forgot_scene : String = "res://screens/forgot password .tscn"
-	get_tree().change_scene_to_file.call_deferred(forgot_scene)
+	var changepass_scene : String = "res://screens/changepass.tscn"
+	get_tree().change_scene_to_file.call_deferred(changepass_scene)
 
 func _on_logout() -> void:
 	AuthManager.logout()

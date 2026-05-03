@@ -37,6 +37,9 @@ func _ready() -> void:
 	password_field.placeholder_text = "Password"
 	email_field.placeholder_text    = "Email"
 	password_field.right_icon       = null
+	
+	email_field.add_theme_color_override("caret_color", Color(0.1, 0.1, 0.1, 1))
+	password_field.add_theme_color_override("caret_color", Color(0.1, 0.1, 0.1, 1))
 
 	signup_label.mouse_filter = Control.MOUSE_FILTER_STOP
 	signup_label.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -54,7 +57,13 @@ func _ready() -> void:
 	AuthManager.login_success.connect(_on_login_success)
 	AuthManager.signup_success.connect(_on_signup_success)
 	AuthManager.login_failed.connect(_on_login_failed)
-	AuthManager.oauth_login_started.connect(_on_oauth_started)
+	AuthManager.session_restored.connect(_on_session_restored)
+
+func _on_session_restored(_user: Dictionary) -> void:
+	if _user.has("email"):
+		email_field.text = _user["email"]
+		password_field.grab_focus()
+		_show_info("Welcome back! Please enter your password.")
 
 func _input(event: InputEvent) -> void:
 	# Shift + T to fill test credentials
@@ -137,9 +146,11 @@ func _on_login_success(_user: Dictionary) -> void:
 		
 	AuthManager.post_login_intro = true
 	if AuthManager.is_new_user or AuthManager.needs_profile_completion():
-		ScreenTransition.go(USER_DETAILS_SCENE, "left")
+		get_tree().change_scene_to_file.call_deferred(USER_DETAILS_SCENE)
+	elif AuthManager.needs_avatar_generation():
+		get_tree().change_scene_to_file.call_deferred("res://screens/avatar_generation.tscn")
 	else:
-		ScreenTransition.go(WELCOME1_SCENE, "left")
+		get_tree().change_scene_to_file.call_deferred(WELCOME1_SCENE)
 
 func _on_signup_success(_user: Dictionary) -> void:
 	login_button.disabled = false

@@ -11,6 +11,7 @@ const INPUT_CODE_SCENE := "res://screens/inputcode.tscn"
 
 func _ready() -> void:
 	email_field.placeholder_text = "Enter your email address"
+	email_field.add_theme_color_override("caret_color", Color(0.1, 0.1, 0.1, 1))
 	submit_button.pressed.connect(_on_submit_pressed)
 	cancel_button.pressed.connect(_on_cancel_pressed)
 	email_field.text_submitted.connect(_on_email_submitted)

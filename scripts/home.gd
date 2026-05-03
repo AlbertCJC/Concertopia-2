@@ -98,6 +98,7 @@ const SLOT_NAMES : Array[String] = [
 var _current_idx  : int   = 0
 var _is_animating : bool  = false
 var _live_pulse_t : float = 0.0
+var _bg_music     : AudioStreamPlayer = null
 
 # ── Node refs ──────────────────────────────────────────────────────────────────
 var _bg_texture      : TextureRect = null
@@ -151,6 +152,23 @@ func _ready() -> void:
 	_build_top_bar()
 	_build_dot_indicators()
 	_animate_enter_in()
+	_setup_music()
+
+func _setup_music() -> void:
+	_bg_music = AudioStreamPlayer.new()
+	add_child(_bg_music)
+	_bg_music.bus = "Music" # Optional: ensure you have a "Music" bus in your audio bus layout
+	
+	# Attempt to load a default track
+	var track_path := "res://audio/home_music.mp3"
+	if FileAccess.file_exists(track_path):
+		var stream = load(track_path)
+		if stream:
+			_bg_music.stream = stream
+			_bg_music.play()
+			print("[Home] Background music started.")
+	else:
+		print("[Home] Background music file not found at: ", track_path)
 
 func _process(delta: float) -> void:
 	# Pulse live dots
@@ -208,23 +226,34 @@ func _style_nav_button(btn: Button, txt: String) -> void:
 func _style_enter_button() -> void:
 	if _btn_enter == null:
 		return
-	_btn_enter.text = "ENTER  →"
+	_btn_enter.text = "ENTER →"
 	_btn_enter.custom_minimum_size = Vector2(180, 52)
 	_btn_enter.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
-	_enter_glow_style = _flat_style(C_PINK, 26)
-	_enter_glow_style.border_width_left   = 0
-	_enter_glow_style.border_width_right  = 0
-	_enter_glow_style.border_width_top    = 0
-	_enter_glow_style.border_width_bottom = 0
+	_enter_glow_style = StyleBoxFlat.new()
+	_enter_glow_style.bg_color = C_PINK
+	_enter_glow_style.set_corner_radius_all(0)
+	_enter_glow_style.border_width_left   = 4
+	_enter_glow_style.border_width_right  = 4
+	_enter_glow_style.border_width_top    = 4
+	_enter_glow_style.border_width_bottom = 4
+	_enter_glow_style.border_color = Color(1, 1, 1, 0.8)
+	_enter_glow_style.shadow_color = Color(0, 0, 0, 1.0)
+	_enter_glow_style.shadow_size  = 0
+	_enter_glow_style.shadow_offset = Vector2(4, 4)
 
-	var sh := _flat_style(C_PINK_HV, 26)
-	var sp := _flat_style(C_PINK.darkened(0.15), 26)
+	var sh := _enter_glow_style.duplicate() as StyleBoxFlat
+	sh.bg_color = C_PINK_HV
+	
+	var sp := _enter_glow_style.duplicate() as StyleBoxFlat
+	sp.bg_color = C_PINK.darkened(0.15)
+	sp.shadow_offset = Vector2(0, 0)
+	
 	_btn_enter.add_theme_stylebox_override("normal",  _enter_glow_style)
 	_btn_enter.add_theme_stylebox_override("hover",   sh)
 	_btn_enter.add_theme_stylebox_override("pressed", sp)
-	_btn_enter.add_theme_color_override("font_color", Color(0.08, 0.04, 0.14))
-	_btn_enter.add_theme_font_size_override("font_size", 15)
+	_btn_enter.add_theme_color_override("font_color", Color(1, 1, 1, 1))
+	_btn_enter.add_theme_font_size_override("font_size", 20)
 	if _pixel_font:
 		_btn_enter.add_theme_font_override("font", _pixel_font)
 
@@ -317,35 +346,38 @@ func _build_top_bar() -> void:
 	profile_btn.add_child(profile_hbox)
 
 	var av_panel := PanelContainer.new()
-	av_panel.custom_minimum_size = Vector2(40, 40)
+	av_panel.custom_minimum_size = Vector2(56, 56)
+	av_panel.clip_contents = true
 	var av_style := StyleBoxFlat.new()
 	av_style.bg_color = C_AVATAR
-	av_style.set_corner_radius_all(20)
-	av_style.border_width_left   = 2
-	av_style.border_width_right  = 2
-	av_style.border_width_top    = 2
-	av_style.border_width_bottom = 2
+	av_style.set_corner_radius_all(0)
+	av_style.border_width_left   = 3
+	av_style.border_width_right  = 3
+	av_style.border_width_top    = 3
+	av_style.border_width_bottom = 3
 	av_style.border_color = C_PINK
 	av_panel.add_theme_stylebox_override("panel", av_style)
 	profile_hbox.add_child(av_panel)
 
 	_topbar_avatar = TextureRect.new()
 	_topbar_avatar.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_topbar_avatar.expand_mode  = TextureRect.EXPAND_FIT_HEIGHT_PROPORTIONAL
-	_topbar_avatar.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_topbar_avatar.expand_mode  = TextureRect.EXPAND_IGNORE_SIZE
+	_topbar_avatar.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	_topbar_avatar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_topbar_avatar.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	av_panel.add_child(_topbar_avatar)
 	_load_topbar_avatar()
 
 	var name_vbox := VBoxContainer.new()
 	name_vbox.add_theme_constant_override("separation", 1)
 	name_vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	name_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
 	profile_hbox.add_child(name_vbox)
 
 	_topbar_name_lbl = Label.new()
 	_topbar_name_lbl.text = AuthManager.current_user.get("display_name", "Guest")
 	_topbar_name_lbl.add_theme_color_override("font_color", C_CREAM)
-	_topbar_name_lbl.add_theme_font_size_override("font_size", 14)
+	_topbar_name_lbl.add_theme_font_size_override("font_size", 16)
 	if _pixel_font:
 		_topbar_name_lbl.add_theme_font_override("font", _pixel_font)
 	_topbar_name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -354,7 +386,7 @@ func _build_top_bar() -> void:
 	var tagline := Label.new()
 	tagline.text = "Concert Fan 🎵"
 	tagline.add_theme_color_override("font_color", C_MUTED)
-	tagline.add_theme_font_size_override("font_size", 10)
+	tagline.add_theme_font_size_override("font_size", 12)
 	if _body_font:
 		tagline.add_theme_font_override("font", _body_font)
 	tagline.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -372,13 +404,14 @@ func _build_top_bar() -> void:
 	var title_vbox := VBoxContainer.new()
 	title_vbox.add_theme_constant_override("separation", 0)
 	title_vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	title_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
 	hbox.add_child(title_vbox)
 
 	var title_lbl := Label.new()
 	title_lbl.text = "ConcerTopia"
 	title_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title_lbl.add_theme_color_override("font_color", C_CREAM)
-	title_lbl.add_theme_font_size_override("font_size", 18)
+	title_lbl.add_theme_font_size_override("font_size", 22)
 	if _pixel_font:
 		title_lbl.add_theme_font_override("font", _pixel_font)
 	title_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -388,9 +421,9 @@ func _build_top_bar() -> void:
 	sub_lbl.text = "choose your room"
 	sub_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	sub_lbl.add_theme_color_override("font_color", Color(C_MUTED.r, C_MUTED.g, C_MUTED.b, 0.6))
-	sub_lbl.add_theme_font_size_override("font_size", 9)
-	if _body_font:
-		sub_lbl.add_theme_font_override("font", _body_font)
+	sub_lbl.add_theme_font_size_override("font_size", 11)
+	if _pixel_font:
+		sub_lbl.add_theme_font_override("font", _pixel_font)
 	sub_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	title_vbox.add_child(sub_lbl)
 
@@ -405,8 +438,8 @@ func _build_top_bar() -> void:
 	right_hbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hbox.add_child(right_hbox)
 
-	_add_topbar_icon_btn(right_hbox, "⚙", _on_settings_pressed)
-	_add_topbar_icon_btn(right_hbox, "🚪", _on_logout)
+	_add_topbar_icon_btn(right_hbox, "≡ SETTINGS", _on_settings_pressed)
+	_add_topbar_icon_btn(right_hbox, "→ LOGOUT", _on_logout)
 
 func _add_topbar_btn(parent: Control, text: String, col: Color, callback: Callable) -> void:
 	var btn := Button.new()
@@ -436,18 +469,56 @@ func _add_topbar_btn(parent: Control, text: String, col: Color, callback: Callab
 func _add_topbar_icon_btn(parent: Control, icon_text: String, callback: Callable) -> void:
 	var btn := Button.new()
 	btn.text = icon_text
-	btn.flat = true
-	btn.custom_minimum_size = Vector2(32, 32)
-	btn.add_theme_color_override("font_color", C_MUTED)
-	btn.add_theme_font_size_override("font_size", 18)
+	btn.flat = false
+	btn.custom_minimum_size = Vector2(90, 36)
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var col := C_PINK
+	var sn := _flat_style(Color(col.r, col.g, col.b, 0.15), 0)
+	var sh := _flat_style(Color(col.r, col.g, col.b, 0.30), 0)
+	btn.add_theme_stylebox_override("normal",  sn)
+	btn.add_theme_stylebox_override("hover",   sh)
+	btn.add_theme_stylebox_override("pressed", sn)
+	btn.add_theme_color_override("font_color", col)
+	btn.add_theme_font_size_override("font_size", 14)
+	if _pixel_font:
+		btn.add_theme_font_override("font", _pixel_font)
 	btn.pressed.connect(callback)
 	parent.add_child(btn)
 
 func _load_topbar_avatar() -> void:
 	if _topbar_avatar == null:
 		return
-	_topbar_avatar.texture = null
+	
+	var default_tex = load("res://icons/user.png") as Texture2D
+	_topbar_avatar.texture = default_tex
+	
+	var avatar_url = AuthManager.current_user.get("avatar_url", "")
+	
+	# If we have a local file from a recent generation, use it
+	if FileAccess.file_exists("user://avatar.png"):
+		var image = Image.new()
+		var err = image.load("user://avatar.png")
+		if err == OK:
+			_topbar_avatar.texture = ImageTexture.create_from_image(image)
+			return
+			
+	# If we have a URL but no local file (e.g. fresh login), download it
+	if not avatar_url.is_empty():
+		var http = HTTPRequest.new()
+		add_child(http)
+		http.request_completed.connect(func(res: int, code: int, hdrs: PackedStringArray, body: PackedByteArray):
+			if code >= 200 and code < 300:
+				var image = Image.new()
+				var err = image.load_jpg_from_buffer(body)
+				if err != OK: err = image.load_png_from_buffer(body)
+				if err != OK: err = image.load_webp_from_buffer(body)
+				
+				if err == OK:
+					_topbar_avatar.texture = ImageTexture.create_from_image(image)
+					image.save_png("user://avatar.png")
+			http.queue_free()
+		)
+		http.request(avatar_url)
 
 # ── Bind slot refs ─────────────────────────────────────────────────────────────
 func _bind_slot_refs() -> void:
@@ -520,14 +591,15 @@ func _style_card_panel(idx: int, data: Dictionary) -> void:
 	var accent : Color = data["accent"]
 	var style  : StyleBoxFlat = StyleBoxFlat.new()
 	style.bg_color = bg.darkened(0.15)
-	style.set_corner_radius_all(CARD_RADIUS)
-	style.border_width_left   = 1
-	style.border_width_right  = 1
-	style.border_width_top    = 1
-	style.border_width_bottom = 1
-	style.border_color = Color(accent.r, accent.g, accent.b, 0.45)
-	style.shadow_color = Color(0, 0, 0, 0.55)
-	style.shadow_size  = 8
+	style.set_corner_radius_all(0)
+	style.border_width_left   = 4
+	style.border_width_right  = 4
+	style.border_width_top    = 4
+	style.border_width_bottom = 4
+	style.border_color = accent
+	style.shadow_color = Color(0, 0, 0, 1.0)
+	style.shadow_size  = 0
+	style.shadow_offset = Vector2(8, 8) # Retro blocky shadow
 	card.add_theme_stylebox_override("panel", style)
 
 func _style_door(door: Control, col: Color, accent: Color) -> void:

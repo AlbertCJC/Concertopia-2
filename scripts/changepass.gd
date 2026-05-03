@@ -18,6 +18,9 @@ func _ready() -> void:
 	confirm_field.placeholder_text = "Confirm New Password"
 	new_password_field.right_icon = null
 	confirm_field.right_icon      = null
+	
+	new_password_field.add_theme_color_override("caret_color", Color(0.1, 0.1, 0.1, 1))
+	confirm_field.add_theme_color_override("caret_color", Color(0.1, 0.1, 0.1, 1))
 
 	_setup_eye_toggle(new_password_field)
 	_setup_eye_toggle(confirm_field)
