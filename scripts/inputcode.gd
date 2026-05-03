@@ -4,6 +4,8 @@ extends VBoxContainer
 @onready var box2: LineEdit        = $HBoxContainer/box2
 @onready var box3: LineEdit        = $HBoxContainer/box3
 @onready var box4: LineEdit        = $HBoxContainer/box4
+@onready var box5: LineEdit        = $HBoxContainer/box5
+@onready var box6: LineEdit        = $HBoxContainer/box6
 @onready var submit_button: Button = $submit
 @onready var cancel_button: Button = $cancel
 var error_label: Label = null
@@ -17,11 +19,15 @@ func _ready() -> void:
 	_configure_box(box2)
 	_configure_box(box3)
 	_configure_box(box4)
+	_configure_box(box5)
+	_configure_box(box6)
 
 	box1.text_changed.connect(_on_box_changed.bind(box1, box2))
 	box2.text_changed.connect(_on_box_changed.bind(box2, box3))
 	box3.text_changed.connect(_on_box_changed.bind(box3, box4))
-	box4.text_changed.connect(_on_box4_changed)
+	box4.text_changed.connect(_on_box_changed.bind(box4, box5))
+	box5.text_changed.connect(_on_box_changed.bind(box5, box6))
+	box6.text_changed.connect(_on_box6_changed)
 
 	submit_button.pressed.connect(_on_submit_pressed)
 	cancel_button.pressed.connect(_on_cancel_pressed)
@@ -47,34 +53,41 @@ func _on_box_changed(new_text: String, current_box: LineEdit, next_box: LineEdit
 		next_box.grab_focus()
 	_show_error("")
 
-func _on_box4_changed(new_text: String) -> void:
+func _on_box6_changed(new_text: String) -> void:
 	if new_text.length() == 1:
 		if not new_text.is_valid_int():
-			box4.text = ""
+			box6.text = ""
 			return
-		if _get_full_code().length() == 4:
+		if _get_full_code().length() == 6:
 			_attempt_verify()
 
 func _get_full_code() -> String:
-	return box1.text + box2.text + box3.text + box4.text
+	return box1.text + box2.text + box3.text + box4.text + box5.text + box6.text
 
 func _on_submit_pressed() -> void:
 	_attempt_verify()
 
 func _attempt_verify() -> void:
 	var code := _get_full_code()
-	if code.length() < 4:
-		_show_error("Please enter all 4 digits.")
+	if code.length() < 6:
+		_show_error("Please enter all 6 digits.")
 		return
 	_show_error("")
 	submit_button.disabled = true
 	submit_button.text = "Verifying..."
 	AuthManager.verify_reset_code(code)
 
+const USER_DETAILS_SCENE := "res://screens/user_details.tscn"
+
 func _on_code_verified() -> void:
 	submit_button.disabled = false
 	submit_button.text = "Submit"
-	get_tree().change_scene_to_file.call_deferred(CHANGE_PASS_SCENE)
+	
+	if AuthManager._verification_type == "signup":
+		AuthManager.post_login_intro = true
+		get_tree().change_scene_to_file.call_deferred(USER_DETAILS_SCENE)
+	else:
+		get_tree().change_scene_to_file.call_deferred(CHANGE_PASS_SCENE)
 
 func _on_code_invalid() -> void:
 	submit_button.disabled = false
@@ -84,6 +97,8 @@ func _on_code_invalid() -> void:
 	box2.text = ""
 	box3.text = ""
 	box4.text = ""
+	box5.text = ""
+	box6.text = ""
 	box1.grab_focus()
 
 func _on_cancel_pressed() -> void:

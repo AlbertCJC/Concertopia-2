@@ -69,7 +69,7 @@ layout_mode = 2
 [node name="input___" type="Label" parent="CenterContainer/VBoxContainer" unique_id=338709710]
 layout_mode = 2
 size_flags_horizontal = 4
-text = "Input the 4-digit code we sent to your email"
+text = "Input the 6-digit code we sent to your email"
 
 [node name="HBoxContainer" type="HBoxContainer" parent="CenterContainer/VBoxContainer" unique_id=732146116]
 custom_minimum_size = Vector2(0, 40)
@@ -98,6 +98,20 @@ alignment = 1
 max_length = 1
 
 [node name="box4" type="LineEdit" parent="CenterContainer/VBoxContainer/HBoxContainer" unique_id=696260639]
+custom_minimum_size = Vector2(60, 60)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_gter4")
+alignment = 1
+max_length = 1
+
+[node name="box5" type="LineEdit" parent="CenterContainer/VBoxContainer/HBoxContainer" unique_id=924480831]
+custom_minimum_size = Vector2(60, 60)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_gter4")
+alignment = 1
+max_length = 1
+
+[node name="box6" type="LineEdit" parent="CenterContainer/VBoxContainer/HBoxContainer" unique_id=2072585170]
 custom_minimum_size = Vector2(60, 60)
 layout_mode = 2
 theme_override_styles/normal = SubResource("StyleBoxFlat_gter4")

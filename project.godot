@@ -21,6 +21,7 @@ AuthManager="*res://scripts/auth_manager.gd"
 FirstLaunch="*res://scripts/first_launch.gd"
 ScreenTransition="*res://scripts/screen_transition.gd"
 RoomRegistry="*res://scripts/room_registry.gd"
+OAuthServer="*res://scripts/oauth_server.gd"
 
 [display]
 

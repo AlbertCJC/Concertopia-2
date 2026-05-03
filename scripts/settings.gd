@@ -111,9 +111,18 @@ func _build_ui() -> void:
 	var user : Dictionary = AuthManager.current_user
 	var display_name : String = user.get("display_name","Guest")
 	var email_str    : String = user.get("email","")
+	var full_name    : String = user.get("full_name", "")
+	var age          : String = str(user.get("age", ""))
+	var bio          : String = user.get("bio", "")
 
 	_add_info_row(vbox, "👤  Display Name", display_name)
 	_add_info_row(vbox, "📧  Email",        email_str)
+	if !full_name.is_empty():
+		_add_info_row(vbox, "🏷️  Full Name", full_name)
+	if age != "0" and !age.is_empty():
+		_add_info_row(vbox, "🎂  Age",       age)
+	if !bio.is_empty():
+		_add_info_row(vbox, "ℹ️  Bio",       bio)
 
 	_add_divider(vbox)
 

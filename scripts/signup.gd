@@ -7,11 +7,15 @@ extends VBoxContainer
 @onready var login_label    : Label    = $Label
 var error_label : Label = null
 
-const WELCOME1_SCENE : String = "res://screens/welcome_screen1.tscn"
+const USER_DETAILS_SCENE : String = "res://screens/user_details.tscn"
 const LOGIN_SCENE    : String = "res://screens/login.tscn"
 
 const EYE_OPEN   : String = "res://icons/eye.png"
 const EYE_CLOSED : String = "res://icons/eye-closed.png"
+
+# ── Test Credentials ───────────────────────────────────────────────────────────
+const TEST_EMAIL    : String = "test_new@concertopia.com"
+const TEST_PASSWORD : String = "password123"
 
 func _ready() -> void:
 	password_field.secret           = true
@@ -42,6 +46,15 @@ func _ready() -> void:
 	AuthManager.signup_failed.connect(_on_signup_failed)
 
 	_ensure_error_label()
+
+func _input(event: InputEvent) -> void:
+	# Shift + T to fill test credentials
+	if event is InputEventKey and event.pressed:
+		if event.keycode == KEY_T and event.shift_pressed:
+			email_field.text = TEST_EMAIL
+			password_field.text = TEST_PASSWORD
+			confirm_field.text = TEST_PASSWORD
+			_show_error("") # Clear error if any
 
 func _setup_eye_toggle(field: LineEdit) -> void:
 	var eye_closed : Texture2D = load(EYE_CLOSED) as Texture2D
@@ -113,9 +126,14 @@ func _attempt_signup() -> void:
 func _on_signup_success(_user: Dictionary) -> void:
 	signup_button.disabled = false
 	signup_button.text = "Sign Up"
-	# Flow: Signup → Welcome 1→2→3 → Welcome User → Home
-	AuthManager.post_login_intro = true
-	get_tree().change_scene_to_file.call_deferred(WELCOME1_SCENE)
+	
+	if AuthManager.access_token.is_empty():
+		# Email confirmation required, go to OTP screen
+		get_tree().change_scene_to_file.call_deferred("res://screens/inputcode.tscn")
+	else:
+		# Auto-logged in (no confirmation needed)
+		AuthManager.post_login_intro = true
+		get_tree().change_scene_to_file.call_deferred(USER_DETAILS_SCENE)
 
 func _on_signup_failed(reason: String) -> void:
 	signup_button.disabled = false
