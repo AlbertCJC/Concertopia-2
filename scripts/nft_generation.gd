@@ -281,7 +281,7 @@ func _on_generate_pressed() -> void:
 	var full_prompt = base_prompt + prompt + style_prompt
 	var safe_prompt = full_prompt.uri_encode()
 	var url = "https://image.pollinations.ai/prompt/" + safe_prompt + "?width=1024&height=1024&nologo=true&model=flux&seed=" + str(randi())
-	
+	_last_generated_url = url
 	http_request.request(url)
 
 func _on_request_completed(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray) -> void:
@@ -298,10 +298,14 @@ func _on_request_completed(result: int, response_code: int, headers: PackedStrin
 			status_label.add_theme_color_override("font_color", Color(0.4, 1.0, 0.5))
 			mint_btn.visible = true
 			
+			# Save to vault cache for immediate availability
+			if not DirAccess.dir_exists_absolute("user://vault_cache"):
+				DirAccess.make_dir_absolute("user://vault_cache")
+			var cache_path = "user://vault_cache/" + str(_last_generated_url.hash()) + ".png"
+			image.save_png(cache_path)
+			
 			AudioManager.play("success")
 			
-			_last_generated_url = "https://image.pollinations.ai/prompt/" + prompt_edit.text.uri_encode() + "?width=1024&height=1024&nologo=true&model=flux&seed=" + str(randi())
-
 			# Deduct credits
 			var current_credits = AuthManager.current_user.get("avatar_credits", 0)
 			AuthManager.current_user["avatar_credits"] = current_credits - NFT_COST
@@ -309,14 +313,18 @@ func _on_request_completed(result: int, response_code: int, headers: PackedStrin
 			
 			_update_credits_display()
 		else:
+			_last_generated_url = "" # Reset if failed
 			_on_error("Failed to process asset data.")
 	else:
+		_last_generated_url = "" # Reset if failed
 		_on_error("Generation failed (Error " + str(response_code) + ")")
 
 func _on_error(msg: String) -> void:
 	generate_btn.disabled = false
+	mint_btn.disabled = false
 	back_btn.disabled = false
 	status_label.text = msg
+	status_label.visible = true
 	status_label.add_theme_color_override("font_color", Color(1, 0.4, 0.4))
 	AudioManager.play("error")
 
@@ -325,10 +333,15 @@ func _on_back_pressed() -> void:
 
 # ── NFT Minting Logic ──────────────────────────────────────────────────────────
 func _on_mint_pressed() -> void:
-	var user_email = AuthManager.current_user.get("email", "")
-	if user_email.is_empty() or _last_generated_url.is_empty():
-		_on_error("Identity verification failed.")
+	var user_email = AuthManager.current_user.get("email")
+	if user_email == null or str(user_email).is_empty():
+		_on_error("Minting failed: User email not found.")
 		return
+	if _last_generated_url == null or _last_generated_url.is_empty():
+		_on_error("Minting failed: No image to mint.")
+		return
+	
+	var final_email = str(user_email)
 	
 	generate_btn.disabled = true
 	mint_btn.disabled = true
@@ -340,7 +353,11 @@ func _on_mint_pressed() -> void:
 	status_label.visible = true
 	
 	var endpoint = CROSSMINT_BASE_URL + "/api/2022-06-09/collections/" + CROSSMINT_COLLECTION_ID + "/nfts"
-	var headers = ["X-PROJECT-ID: " + CROSSMINT_PROJECT_ID, "X-CLIENT-SECRET: " + CROSSMINT_CLIENT_SECRET, "Content-Type: application/json"]
+	var headers = [
+		"X-PROJECT-ID: " + CROSSMINT_PROJECT_ID, 
+		"X-CLIENT-SECRET: " + CROSSMINT_CLIENT_SECRET, 
+		"Content-Type: application/json"
+	]
 	
 	var body = {
 		"recipient": "email:" + user_email + ":polygon",
@@ -355,15 +372,21 @@ func _on_mint_pressed() -> void:
 		}
 	}
 	
-	mint_http_request.request(endpoint, headers, HTTPClient.METHOD_POST, JSON.stringify(body))
+	var json_body = JSON.stringify(body)
+	var err = mint_http_request.request(endpoint, headers, HTTPClient.METHOD_POST, json_body)
+	if err != OK:
+		_on_error("Request failed to initiate.")
 
 func _on_mint_request_completed(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray) -> void:
 	generate_btn.disabled = false
 	mint_btn.disabled = false
 	back_btn.disabled = false
 	
+	var response_text = body.get_string_from_utf8()
+	var response = JSON.parse_string(response_text)
+	
 	if response_code >= 200 and response_code < 300:
-		status_label.text = "NFT MINTED! CONFIRMATION SENT TO EMAIL."
+		status_label.text = "NFT MINTED! CHECK YOUR EMAIL."
 		status_label.add_theme_color_override("font_color", Color(0.4, 1.0, 0.5))
 		mint_btn.visible = false
 		nft_badge.visible = true
@@ -373,6 +396,11 @@ func _on_mint_request_completed(result: int, response_code: int, headers: Packed
 			"timestamp": Time.get_unix_time_from_system()
 		})
 		
+		# Ensure database is updated with the new nft_history
+		AuthManager.update_user_details({
+			"nft_history": AuthManager.current_user["nft_history"]
+		})
+		
 		AudioManager.play("reward")
 		UIUtils.show_toast("NFT Secured!", C_GOLD)
 		
@@ -380,4 +408,8 @@ func _on_mint_request_completed(result: int, response_code: int, headers: Packed
 		nft_badge.modulate.a = 0.0
 		create_tween().tween_property(nft_badge, "modulate:a", 1.0, 0.5)
 	else:
-		_on_error("Blockchain transaction failed.")
+		var error_detail = ""
+		if response is Dictionary and response.has("message"):
+			error_detail = ": " + response["message"]
+		_on_error("Minting failed (Code " + str(response_code) + ")" + error_detail)
+		print("[Crossmint Error] ", response_text)

@@ -116,6 +116,12 @@ func _process(_delta: float) -> void:
 		var chunk : String = _peer.get_string(available)
 		_buf += chunk
 
+	if _buf.length() > 8192:
+		_send_response(ERROR_HTML, 413)
+		stop()
+		oauth_error.emit("Payload too large. Connection closed.")
+		return
+
 	# Wait for end of HTTP headers
 	if not "\r\n\r\n" in _buf and not "\n\n" in _buf:
 		return
