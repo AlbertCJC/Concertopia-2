@@ -319,4 +319,4 @@ func _on_error(msg: String) -> void:
 	status_label.add_theme_color_override("font_color", Color(1, 0.4, 0.4))
 
 func _on_continue_pressed() -> void:
-	get_tree().change_scene_to_file(NEXT_SCENE)
+	get_tree().change_scene_to_file.call_deferred(NEXT_SCENE)

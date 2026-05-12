@@ -637,26 +637,43 @@ func _build_top_bar() -> void:
 func _add_topbar_credits_indicator(parent: Control) -> void:
 	var credits = AuthManager.current_user.get("avatar_credits", 0)
 	
-	var badge := PanelContainer.new()
+	var badge := Button.new()
+	badge.custom_minimum_size = Vector2(110, 28)
+	badge.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.15, 0.12, 0.20, 0.8)
-	style.set_corner_radius_all(15)
+	style.set_corner_radius_all(14)
 	style.border_width_left   = 1
 	style.border_width_right  = 1
 	style.border_width_top    = 1
 	style.border_width_bottom = 1
 	style.border_color = Color(0.92, 0.75, 0.48, 0.5) # Gold-ish
-	badge.add_theme_stylebox_override("panel", style)
-	badge.custom_minimum_size = Vector2(80, 36)
+	
+	var hover_style := style.duplicate()
+	hover_style.bg_color = Color(0.20, 0.16, 0.26, 0.9)
+	
+	badge.add_theme_stylebox_override("normal", style)
+	badge.add_theme_stylebox_override("hover", hover_style)
+	badge.add_theme_stylebox_override("pressed", style)
+	badge.add_theme_stylebox_override("focus", style)
+	
+	badge.pressed.connect(func():
+		AudioManager.play("click")
+		get_tree().change_scene_to_file("res://screens/top_up.tscn")
+	)
 	
 	var margin := MarginContainer.new()
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	margin.add_theme_constant_override("margin_left", 12)
 	margin.add_theme_constant_override("margin_right", 12)
 	badge.add_child(margin)
 	
 	var hbox := HBoxContainer.new()
+	hbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	hbox.add_theme_constant_override("separation", 6)
+	hbox.add_theme_constant_override("separation", 8)
 	margin.add_child(hbox)
 	
 	var lbl := Label.new()
@@ -668,6 +685,7 @@ func _add_topbar_credits_indicator(parent: Control) -> void:
 	hbox.add_child(lbl)
 	
 	parent.add_child(badge)
+
 
 func _add_topbar_btn(parent: Control, text: String, col: Color, callback: Callable) -> void:
 	var btn := Button.new()
@@ -720,7 +738,8 @@ func _load_topbar_avatar() -> void:
 	var default_tex = load("res://icons/user.png") as Texture2D
 	_topbar_avatar.texture = default_tex
 	
-	var avatar_url = AuthManager.current_user.get("avatar_url", "")
+	var raw_url = AuthManager.current_user.get("avatar_url", "")
+	var avatar_url : String = raw_url if raw_url is String else ""
 	var avatar_path = AuthManager.get_active_avatar_path()
 	
 	# If we have a local file from a recent generation, use it

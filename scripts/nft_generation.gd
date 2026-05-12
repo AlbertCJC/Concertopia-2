@@ -102,7 +102,7 @@ func _build_ui() -> void:
 	nft_rect.custom_minimum_size = Vector2(450, 450)
 	nft_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	nft_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	var default_tex = load("res://icons/icon.svg") as Texture2D
+	var default_tex = load("res://icons/nft_placeholder.svg") as Texture2D
 	if default_tex: nft_rect.texture = default_tex
 	preview_frame.add_child(nft_rect)
 	
@@ -276,8 +276,8 @@ func _on_generate_pressed() -> void:
 	tw.tween_property(nft_rect.get_parent(), "position:x", -20, 0.05).as_relative()
 	tw.tween_property(nft_rect.get_parent(), "position:x", 10, 0.05).as_relative()
 
-	var base_prompt = "A high-quality, professional digital art piece, suitable for a premium NFT collection. Style: "
-	var style_prompt = ". Detailed, cinematic lighting, 8k resolution, artistic composition."
+	var base_prompt = "A high-quality 16-bit pixel art illustration, retro video game style, perfect pixel precision. Subject: "
+	var style_prompt = ". Vibrant colors, crisp pixel edges, nostalgic aesthetic, flat background."
 	var full_prompt = base_prompt + prompt + style_prompt
 	var safe_prompt = full_prompt.uri_encode()
 	var url = "https://image.pollinations.ai/prompt/" + safe_prompt + "?width=1024&height=1024&nologo=true&model=flux&seed=" + str(randi())
@@ -330,7 +330,7 @@ func _on_error(msg: String) -> void:
 	AudioManager.play("error")
 
 func _on_back_pressed() -> void:
-	get_tree().change_scene_to_file(HOME_SCENE)
+	get_tree().change_scene_to_file.call_deferred(HOME_SCENE)
 
 # ── NFT Minting Logic ──────────────────────────────────────────────────────────
 func _on_mint_pressed() -> void:

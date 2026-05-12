@@ -194,6 +194,8 @@ func _create_item_card(url: String, type: String, idx: int, meta: Dictionary = {
 	var card := PanelContainer.new()
 	card.custom_minimum_size = Vector2(300, 300)
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.mouse_filter = Control.MOUSE_FILTER_STOP # Ensure card captures clicks
+	
 	var style := StyleBoxFlat.new()
 	style.bg_color = C_PANEL
 	style.border_width_left = 6; style.border_width_right = 6
@@ -210,6 +212,7 @@ func _create_item_card(url: String, type: String, idx: int, meta: Dictionary = {
 	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	tex.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	tex.mouse_filter = Control.MOUSE_FILTER_IGNORE # Prevent blocking clicks
 	card.add_child(tex)
 
 	# 3. Overlay Layer
@@ -222,16 +225,19 @@ func _create_item_card(url: String, type: String, idx: int, meta: Dictionary = {
 		overlay.add_child(b)
 
 	var sp = Control.new(); sp.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	sp.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	overlay.add_child(sp)
 
 	if type == "nft":
 		var info = PanelContainer.new()
+		info.mouse_filter = Control.MOUSE_FILTER_IGNORE # Prevent blocking clicks
 		var s = StyleBoxFlat.new(); s.bg_color = C_BLACK_TR
 		info.add_theme_stylebox_override("panel", s)
 		overlay.add_child(info)
 		var l = Label.new()
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		l.add_theme_font_size_override("font_size", 10)
+		l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		if body_font: l.add_theme_font_override("font", body_font)
 		var ts = meta.get("timestamp", 0)
 		if ts > 0:
@@ -314,8 +320,23 @@ func _fetch_remote(url: String, tex: TextureRect, cache_path: String, parent: No
 
 func _apply_choice(url: String) -> void:
 	AudioManager.play("success")
+	
+	# Copy the selected image from the vault cache to the active avatar slot
+	var cache_dir = AuthManager.get_vault_cache_dir()
+	var cache_path = cache_dir + str(url.hash()) + ".png"
+	var avatar_path = AuthManager.get_active_avatar_path()
+	
+	if FileAccess.file_exists(cache_path):
+		var img = Image.load_from_file(cache_path)
+		if img:
+			img.save_png(avatar_path)
+	
 	AuthManager.current_user["avatar_url"] = url
 	AuthManager.update_user_details({"avatar_url": url})
+	
+	# Force emit profile update so Home and Profile screens refresh
+	AuthManager.profile_updated.emit()
+	
 	UIUtils.show_toast("Identity Updated!", C_PINK)
 	_load_avatars()
 

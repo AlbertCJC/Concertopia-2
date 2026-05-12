@@ -185,6 +185,10 @@ func update_user_details(details: Dictionary) -> void:
 			# Absolute fallback if we somehow have no name yet
 			payload["display_name"] = current_user.get("email", "New User").split("@")[0]
 
+	# FIX: Ensure email is sent to be saved in the database profile
+	if not payload.has("email") and current_user.has("email"):
+		payload["email"] = current_user["email"]
+
 	print("[AuthManager] Updating profile for UUID: ", user_id, " | Keys: ", payload.keys())
 
 	# Use UPSERT logic (POST with merge-duplicates)

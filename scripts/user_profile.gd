@@ -200,7 +200,9 @@ func _load_avatar() -> void:
 			avatar_rect.texture = ImageTexture.create_from_image(image)
 			return
 			
-	var avatar_url = AuthManager.current_user.get("avatar_url", "")
+	var raw_url = AuthManager.current_user.get("avatar_url", "")
+	var avatar_url : String = raw_url if raw_url is String else ""
+	
 	if not avatar_url.is_empty():
 		UIUtils.add_shimmer(avatar_rect)
 		var http = HTTPRequest.new()

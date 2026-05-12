@@ -216,36 +216,36 @@ const JOURNEYS : Dictionary = {
 # ── Concert tour data ──────────────────────────────────────────────────────────
 const CONCERT_TOURS : Dictionary = {
 	"BRUNO\nMARS": [
-		{ "year": "2010–2012", "title": "The Doo-Wops & Hooligans Tour", "text": "Bruno Mars' debut headlining tour to support his breakthrough album. It established his reputation as a phenomenal live performer, playing intimate venues before scaling up to arenas." },
-		{ "year": "2013–2014", "title": "The Moonshine Jungle Tour", "text": "A massive global tour supporting Unorthodox Jukebox. Featuring tight choreography and a spectacular backing band, The Hooligans, it cemented his status as a stadium-level entertainer." },
-		{ "year": "2017–2018", "title": "24K Magic World Tour", "text": "An incredibly successful tour celebrating 1990s R&B and funk. It grossed over $367 million globally and won a Billboard Music Award for Top R&B Tour." },
-		{ "year": "2021–Now", "title": "Silk Sonic & Las Vegas Residency", "text": "Performances focusing on his collaborative project with Anderson .Paak, and an ongoing, highly praised residency at Park MGM in Las Vegas, blending his greatest hits with unmatched showmanship." }
+		{ "year": "2010–2012", "title": "The Doo-Wops & Hooligans Tour", "text": "Bruno Mars' debut headlining tour to support his breakthrough album.", "youtube_id": "LjhCEhWiKXk" },
+		{ "year": "2013–2014", "title": "The Moonshine Jungle Tour", "text": "A massive global tour supporting Unorthodox Jukebox.", "youtube_id": "nPvuNsRccVw" },
+		{ "year": "2017–2018", "title": "24K Magic World Tour", "text": "An incredibly successful tour celebrating 1990s R&B and funk.", "youtube_id": "UqyT8IEBkvY" },
+		{ "year": "2021–Now", "title": "Silk Sonic & Las Vegas Residency", "text": "Performances focusing on his collaborative project with Anderson .Paak.", "youtube_id": "adLGHcj_fmA" }
 	],
 	"TAYLOR\nSWIFT": [
-		{ "year": "2009–2010", "title": "Fearless Tour", "text": "Taylor's debut headlining concert tour, solidifying her as a teenage country-pop sensation with theatrical set pieces and multiple costume changes." },
-		{ "year": "2011–2012", "title": "Speak Now World Tour", "text": "A highly theatrical tour where Swift acted as the sole writer of the album, featuring Broadway-style staging, fireworks, and aerial balconies." },
-		{ "year": "2013–2014", "title": "The Red Tour", "text": "Her transitional tour bridging country and pure pop. It became the highest-grossing tour by a country artist at the time, featuring elaborate choreography and a stadium-ready production." },
-		{ "year": "2015", "title": "The 1989 World Tour", "text": "A massive pop spectacle filled with surprise guest appearances from legendary artists and supermodels, solidifying her complete crossover into pop dominance." },
-		{ "year": "2018", "title": "Reputation Stadium Tour", "text": "A darker, more intense stadium-only tour featuring giant inflatable snakes and a massive production scale. It became the highest-grossing US tour in history at the time." },
-		{ "year": "2023–2024", "title": "The Eras Tour", "text": "A monumental, career-spanning retrospective. It became a cultural phenomenon, breaking records as the first concert tour in history to gross over one billion dollars." }
+		{ "year": "2009–2010", "title": "Fearless Tour", "text": "Taylor's debut headlining concert tour.", "youtube_id": "8xg3vE8Ie_E" },
+		{ "year": "2011–2012", "title": "Speak Now World Tour", "text": "A highly theatrical tour where Swift acted as the sole writer of the album.", "youtube_id": "Jb2stN7kH28" },
+		{ "year": "2013–2014", "title": "The Red Tour", "text": "Her transitional tour bridging country and pure pop.", "youtube_id": "vNoKguSdy4Y" },
+		{ "year": "2015", "title": "The 1989 World Tour", "text": "A massive pop spectacle filled with surprise guest appearances.", "youtube_id": "nfWlot6h_JM" },
+		{ "year": "2018", "title": "Reputation Stadium Tour", "text": "A darker, more intense stadium-only tour featuring giant inflatable snakes.", "youtube_id": "3tmd-ClpJxA" },
+		{ "year": "2023–2024", "title": "The Eras Tour", "text": "A monumental, career-spanning retrospective.", "youtube_id": "ic8j13piAhQ" }
 	],
 	"ARIANA\nGRANDE": [
-		{ "year": "2013", "title": "The Listening Sessions", "text": "Ariana's debut tour supporting Yours Truly. Intimate theater shows that showcased her immense vocal talent and four-octave range to early fans." },
-		{ "year": "2015", "title": "The Honeymoon Tour", "text": "Her first global arena tour supporting My Everything. It featured a mix of emotional ballads and high-energy pop anthems, proving her vocal endurance." },
-		{ "year": "2017", "title": "Dangerous Woman Tour", "text": "A more mature and globally expansive tour. Tragically interrupted by the Manchester Arena bombing, it became a symbol of resilience when she returned for the One Love Manchester benefit." },
-		{ "year": "2019", "title": "Sweetener World Tour", "text": "Supporting both Sweetener and Thank U, Next. It featured striking, minimalist moon-themed production and became her highest-grossing tour, capturing her at the peak of her commercial power." }
+		{ "year": "2013", "title": "The Listening Sessions", "text": "Ariana's debut tour supporting Yours Truly.", "youtube_id": "_sV0S8qWSy0" },
+		{ "year": "2015", "title": "The Honeymoon Tour", "text": "Her first global arena tour supporting My Everything.", "youtube_id": "iS1g8G_njx8" },
+		{ "year": "2017", "title": "Dangerous Woman Tour", "text": "A more mature and globally expansive tour.", "youtube_id": "1ekZEVeXwek" },
+		{ "year": "2019", "title": "Sweetener World Tour", "text": "Supporting both Sweetener and Thank U, Next.", "youtube_id": "ffxKSjUwKdU" }
 	],
 	"CHAPPELL\nROAN": [
-		{ "year": "2023", "title": "The Naked in North America Tour", "text": "Her first headlining tour, playing small clubs. It helped build her fiercely loyal core audience, establishing the dress-up themes and drag-inspired aesthetic." },
-		{ "year": "2024", "title": "The Midwest Princess Tour", "text": "A massive breakout tour following her sudden mainstream explosion. Shows quickly moved from mid-sized venues to sold-out arenas as her popularity skyrocketed." },
-		{ "year": "2024–Now", "title": "Festival Domination", "text": "Historic, record-breaking crowds at major festivals like Coachella and Lollapalooza, where her performances drew some of the largest daytime audiences in festival history." }
+		{ "year": "2023", "title": "The Naked in North America Tour", "text": "Her first headlining tour, playing small clubs.", "youtube_id": "jv4P2Jaf_r0" },
+		{ "year": "2024", "title": "The Midwest Princess Tour", "text": "A massive breakout tour following her sudden mainstream explosion.", "youtube_id": "h_V2o_lI-A8" },
+		{ "year": "2024–Now", "title": "Festival Domination", "text": "Historic, record-breaking crowds at major festivals.", "youtube_id": "P0U_S_v_v_Y" }
 	],
 	"THE\nWEEKND": [
-		{ "year": "2012", "title": "The Fall Tour", "text": "His first tour supporting the Trilogy mixtapes. The shows were mysterious and hazy, matching his early enigmatic and shadowy public persona." },
-		{ "year": "2014", "title": "King of the Fall Tour", "text": "A short but significant tour transitioning him from an underground R&B mystery to a mainstream force, building hype for his major label debut." },
-		{ "year": "2015", "title": "The Madness Fall Tour", "text": "Supporting Beauty Behind the Madness. This arena tour launched him into global pop stardom, featuring elaborate lighting and a more confident stage presence." },
-		{ "year": "2017", "title": "Starboy: Legend of the Fall Tour", "text": "A colossal world tour featuring a massive spaceship-like lighting rig. It highlighted his shift towards electronic and synth-pop aesthetics." },
-		{ "year": "2022–2024", "title": "After Hours til Dawn Stadium Tour", "text": "A visually stunning, post-apocalyptic stadium tour. Featuring a burning cityscape and a giant moon, it broke attendance records across Europe and Latin America." }
+		{ "year": "2012", "title": "The Fall Tour", "text": "His first tour supporting the Trilogy mixtapes.", "youtube_id": "O1OTWCd40vU" },
+		{ "year": "2014", "title": "King of the Fall Tour", "text": "A short but significant tour transitioning him to a mainstream force.", "youtube_id": "JPIhUaONiLU" },
+		{ "year": "2015", "title": "The Madness Fall Tour", "text": "Supporting Beauty Behind the Madness.", "youtube_id": "KEI4qSrkPAs" },
+		{ "year": "2017", "title": "Starboy: Legend of the Fall Tour", "text": "A colossal world tour featuring a massive spaceship lighting rig.", "youtube_id": "34Na4j8HLjc" },
+		{ "year": "2022–2024", "title": "After Hours til Dawn Stadium Tour", "text": "A visually stunning, post-apocalyptic stadium tour.", "youtube_id": "4NRXx6U8ABQ" }
 	]
 }
 
@@ -256,6 +256,154 @@ var _room : Dictionary = {}
 var _pixel_font : FontFile = null
 var _body_font  : FontFile = null
 
+# ── Cinema Popup UI ────────────────────────────────────────────────────────────
+var _cinema_layer   : CanvasLayer = null
+var _cinema_overlay : ColorRect = null
+var _cinema_panel   : PanelContainer = null
+var _cinema_thumb   : TextureRect = null
+var _cinema_title   : Label = null
+var _cinema_desc    : Label = null
+var _cinema_watch_btn : Button = null
+var _cinema_close_btn : Button = null
+var _cinema_active_id : String = ""
+
+func _build_cinema_ui() -> void:
+	var acc : Color = _room.get("accent", C_PINK)
+	
+	_cinema_layer = CanvasLayer.new()
+	_cinema_layer.layer = 100 # High layer
+	add_child(_cinema_layer)
+	
+	_cinema_overlay = ColorRect.new()
+	_cinema_overlay.color = Color(0, 0, 0, 0.85)
+	_cinema_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_cinema_overlay.visible = false
+	_cinema_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	_cinema_layer.add_child(_cinema_overlay)
+	
+	# CenterContainer ensures perfect centering on any screen resolution
+	var center_container := CenterContainer.new()
+	center_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_cinema_overlay.add_child(center_container)
+	
+	_cinema_panel = PanelContainer.new()
+	_cinema_panel.custom_minimum_size = Vector2(600, 450)
+	var style := StyleBoxFlat.new()
+	style.bg_color = C_PANEL_DARK
+	style.border_width_left = 4; style.border_width_right = 4
+	style.border_width_top = 4; style.border_width_bottom = 4
+	style.border_color = acc
+	style.set_corner_radius_all(0)
+	style.shadow_color = Color(0, 0, 0, 0.8)
+	style.shadow_size = 30
+	_cinema_panel.add_theme_stylebox_override("panel", style)
+	center_container.add_child(_cinema_panel)
+	
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 20)
+	margin.add_theme_constant_override("margin_right", 20)
+	margin.add_theme_constant_override("margin_top", 20)
+	margin.add_theme_constant_override("margin_bottom", 20)
+	_cinema_panel.add_child(margin)
+	
+	var inner_vbox := VBoxContainer.new()
+	inner_vbox.add_theme_constant_override("separation", 15)
+	margin.add_child(inner_vbox)
+	
+	_cinema_thumb = TextureRect.new()
+	_cinema_thumb.custom_minimum_size = Vector2(560, 315) # 16:9
+	_cinema_thumb.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_cinema_thumb.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	_cinema_thumb.texture = load("res://icons/loading.svg")
+	inner_vbox.add_child(_cinema_thumb)
+	
+	_cinema_title = Label.new()
+	_cinema_title.text = "TOUR TITLE"
+	_cinema_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_cinema_title.add_theme_color_override("font_color", C_GOLD_LIGHT)
+	_cinema_title.add_theme_font_size_override("font_size", 20)
+	if _pixel_font: _cinema_title.add_theme_font_override("font", _pixel_font)
+	inner_vbox.add_child(_cinema_title)
+	
+	_cinema_desc = Label.new()
+	_cinema_desc.text = "Tour details go here..."
+	_cinema_desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_cinema_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_cinema_desc.add_theme_color_override("font_color", C_CREAM)
+	_cinema_desc.add_theme_font_size_override("font_size", 12)
+	if _body_font: _cinema_desc.add_theme_font_override("font", _body_font)
+	inner_vbox.add_child(_cinema_desc)
+	
+	var btn_hbox := HBoxContainer.new()
+	btn_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	btn_hbox.add_theme_constant_override("separation", 20)
+	inner_vbox.add_child(btn_hbox)
+	
+	_cinema_watch_btn = Button.new()
+	_cinema_watch_btn.text = "WATCH IN THEATRE"
+	_cinema_watch_btn.custom_minimum_size = Vector2(200, 45)
+	var wn := _flat(acc, 0); var wh := _flat(acc.lightened(0.2), 0)
+	_cinema_watch_btn.add_theme_stylebox_override("normal", wn)
+	_cinema_watch_btn.add_theme_stylebox_override("hover", wh)
+	_cinema_watch_btn.add_theme_color_override("font_color", C_PANEL_DARK)
+	if _pixel_font: _cinema_watch_btn.add_theme_font_override("font", _pixel_font)
+	_cinema_watch_btn.pressed.connect(_on_watch_in_theatre_pressed)
+	btn_hbox.add_child(_cinema_watch_btn)
+	
+	_cinema_close_btn = Button.new()
+	_cinema_close_btn.text = "CLOSE"
+	_cinema_close_btn.custom_minimum_size = Vector2(120, 45)
+	var cn := _flat(C_MUTED, 0); var ch := _flat(C_MUTED.lightened(0.2), 0)
+	_cinema_close_btn.add_theme_stylebox_override("normal", cn)
+	_cinema_close_btn.add_theme_stylebox_override("hover", ch)
+	if _pixel_font: _cinema_close_btn.add_theme_font_override("font", _pixel_font)
+	_cinema_close_btn.pressed.connect(_hide_cinema)
+	btn_hbox.add_child(_cinema_close_btn)
+
+func _show_cinema(entry: Dictionary) -> void:
+	_cinema_active_id = entry.get("youtube_id", "")
+	_cinema_title.text = entry.get("title", "").to_upper()
+	_cinema_desc.text = entry.get("text", "")
+	
+	if _cinema_overlay == null:
+		return
+		
+	_cinema_overlay.visible = true
+	_cinema_overlay.modulate.a = 0.0
+	
+	var tw := create_tween()
+	tw.tween_property(_cinema_overlay, "modulate:a", 1.0, 0.2)
+
+	if not _cinema_active_id.is_empty():
+		_fetch_thumbnail(_cinema_active_id, "maxresdefault")
+
+func _fetch_thumbnail(id: String, quality: String) -> void:
+	UIUtils.add_shimmer(_cinema_thumb)
+	var url = "https://img.youtube.com/vi/%s/%s.jpg" % [id, quality]
+	var http = HTTPRequest.new()
+	add_child(http)
+	http.request_completed.connect(func(res, code, hdrs, body):
+		UIUtils.remove_shimmer(_cinema_thumb)
+		if code == 200:
+			var img = Image.new()
+			if img.load_jpg_from_buffer(body) == OK:
+				_cinema_thumb.texture = ImageTexture.create_from_image(img)
+		elif quality == "maxresdefault":
+			_fetch_thumbnail(id, "hqdefault")
+		http.queue_free()
+	)
+	http.request(url)
+
+func _hide_cinema() -> void:
+	var tw := create_tween()
+	tw.tween_property(_cinema_overlay, "modulate:a", 0.0, 0.2)
+	tw.chain().tween_callback(func(): _cinema_overlay.visible = false)
+
+func _on_watch_in_theatre_pressed() -> void:
+	if not _cinema_active_id.is_empty():
+		OS.shell_open("https://www.youtube.com/watch?v=" + _cinema_active_id)
+		_hide_cinema()
+
 # ── Lifecycle ──────────────────────────────────────────────────────────────────
 func _ready() -> void:
 	_pixel_font = load("res://Pixelify_Sans/static/PixelifySans-Bold.ttf") as FontFile
@@ -265,6 +413,7 @@ func _ready() -> void:
 		_room = {"artist": "ARTIST", "genre": "Music", "crowd": 0,
 			"bg_color1": C_BG, "accent": C_PINK}
 	_build_ui()
+	_build_cinema_ui()
 
 # ══════════════════════════════════════════════════════════════════════════════
 # UI CONSTRUCTION
@@ -297,26 +446,43 @@ func _add_topbar_credits_indicator(parent: Control) -> void:
 	var credits = AuthManager.current_user.get("avatar_credits", 0)
 	var acc : Color = _room.get("accent", C_PINK)
 	
-	var badge := PanelContainer.new()
+	var badge := Button.new()
+	badge.custom_minimum_size = Vector2(110, 28)
+	badge.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.15, 0.12, 0.20, 0.8)
-	style.set_corner_radius_all(15)
+	style.set_corner_radius_all(14)
 	style.border_width_left   = 1
 	style.border_width_right  = 1
 	style.border_width_top    = 1
 	style.border_width_bottom = 1
 	style.border_color = Color(0.92, 0.75, 0.48, 0.5) # Gold-ish
-	badge.add_theme_stylebox_override("panel", style)
-	badge.custom_minimum_size = Vector2(80, 36)
+	
+	var hover_style := style.duplicate()
+	hover_style.bg_color = Color(0.20, 0.16, 0.26, 0.9)
+	
+	badge.add_theme_stylebox_override("normal", style)
+	badge.add_theme_stylebox_override("hover", hover_style)
+	badge.add_theme_stylebox_override("pressed", style)
+	badge.add_theme_stylebox_override("focus", style)
+	
+	badge.pressed.connect(func():
+		AudioManager.play("click")
+		get_tree().change_scene_to_file("res://screens/top_up.tscn")
+	)
 	
 	var margin := MarginContainer.new()
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	margin.add_theme_constant_override("margin_left", 12)
 	margin.add_theme_constant_override("margin_right", 12)
 	badge.add_child(margin)
 	
 	var hbox := HBoxContainer.new()
+	hbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	hbox.add_theme_constant_override("separation", 6)
+	hbox.add_theme_constant_override("separation", 8)
 	margin.add_child(hbox)
 	
 	var lbl := Label.new()
@@ -328,6 +494,8 @@ func _add_topbar_credits_indicator(parent: Control) -> void:
 	hbox.add_child(lbl)
 	
 	parent.add_child(badge)
+
+
 
 func _build_top_bar() -> void:
 	var acc : Color = _room.get("accent", C_PINK)
@@ -585,6 +753,11 @@ func _add_timeline_entry(
 	var card := PanelContainer.new()
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	card.size_flags_vertical   = Control.SIZE_SHRINK_BEGIN
+	card.mouse_filter = Control.MOUSE_FILTER_STOP # Capture input
+	
+	# Set pivot to center for better scaling
+	card.pivot_offset = Vector2(300, 50) # Estimated
+	
 	var card_style := StyleBoxFlat.new()
 	card_style.bg_color = Color(lerpf(C_PANEL.r, acc.r, 0.02), lerpf(C_PANEL.g, acc.g, 0.02), lerpf(C_PANEL.b, acc.b, 0.02))
 	card_style.set_corner_radius_all(0) # Consistency: Blocky
@@ -600,17 +773,54 @@ func _add_timeline_entry(
 	card.add_theme_stylebox_override("panel", card_style)
 	row.add_child(card)
 	
-	# Hover effect for timeline cards
-	card.mouse_entered.connect(func():
-		var tw = create_tween().set_parallel(true)
-		tw.tween_property(card, "scale", Vector2(1.02, 1.02), 0.1)
-		tw.tween_property(card_style, "shadow_offset", Vector2(10, 10), 0.1)
-	)
-	card.mouse_exited.connect(func():
-		var tw = create_tween().set_parallel(true)
-		tw.tween_property(card, "scale", Vector2(1.0, 1.0), 0.1)
-		tw.tween_property(card_style, "shadow_offset", Vector2(6, 6), 0.1)
-	)
+	var yt_id = entry.get("youtube_id", "")
+	if not yt_id.is_empty():
+		card.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		
+		# Optional: Add a small "PLAY" indicator
+		var play_badge := Label.new()
+		play_badge.text = "▶ WATCH VIDEO"
+		play_badge.add_theme_color_override("font_color", acc)
+		play_badge.add_theme_font_size_override("font_size", 9)
+		if _pixel_font: play_badge.add_theme_font_override("font", _pixel_font)
+		play_badge.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+		play_badge.offset_top = 8; play_badge.offset_right = -12
+		play_badge.modulate.a = 0.0
+		card.add_child(play_badge)
+
+		card.mouse_entered.connect(func():
+			# Recalculate pivot on the fly
+			card.pivot_offset = card.size / 2.0
+			var tw = create_tween().set_parallel(true)
+			tw.tween_property(card, "scale", Vector2(1.02, 1.02), 0.1)
+			tw.tween_property(card_style, "shadow_offset", Vector2(10, 10), 0.1)
+			tw.tween_property(play_badge, "modulate:a", 1.0, 0.1)
+			AudioManager.play("hover")
+		)
+		card.mouse_exited.connect(func():
+			var tw = create_tween().set_parallel(true)
+			tw.tween_property(card, "scale", Vector2(1.0, 1.0), 0.1)
+			tw.tween_property(card_style, "shadow_offset", Vector2(6, 6), 0.1)
+			tw.tween_property(play_badge, "modulate:a", 0.0, 0.1)
+		)
+		card.gui_input.connect(func(event):
+			if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+				AudioManager.play("click")
+				_show_cinema(entry)
+		)
+	else:
+		# Fallback hover for non-video entries
+		card.mouse_entered.connect(func():
+			card.pivot_offset = card.size / 2.0
+			var tw = create_tween().set_parallel(true)
+			tw.tween_property(card, "scale", Vector2(1.02, 1.02), 0.1)
+			tw.tween_property(card_style, "shadow_offset", Vector2(10, 10), 0.1)
+		)
+		card.mouse_exited.connect(func():
+			var tw = create_tween().set_parallel(true)
+			tw.tween_property(card, "scale", Vector2(1.0, 1.0), 0.1)
+			tw.tween_property(card_style, "shadow_offset", Vector2(6, 6), 0.1)
+		)
 
 	var card_vbox := VBoxContainer.new()
 	card_vbox.add_theme_constant_override("separation", 8)
@@ -770,6 +980,37 @@ func _build_ai_ui() -> void:
 	_ai_label.add_theme_font_size_override("normal_font_size", 12)
 	_ai_label.meta_clicked.connect(_on_ai_link_clicked)
 	scroll_margin.add_child(_ai_label)
+	
+	# Spacer
+	var gap := Control.new()
+	gap.custom_minimum_size = Vector2(0, 10)
+	vbox.add_child(gap)
+
+	# Book Concert Button
+	var book_btn := Button.new()
+	book_btn.text = "Book a concert now?"
+	book_btn.custom_minimum_size = Vector2(0, 40)
+	book_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	
+	var b_norm := _flat(C_PANEL, 6)
+	b_norm.border_width_left = 1; b_norm.border_width_right = 1
+	b_norm.border_width_top = 1; b_norm.border_width_bottom = 1
+	b_norm.border_color = acc
+	var b_hov := _flat(acc, 6)
+	
+	book_btn.add_theme_stylebox_override("normal", b_norm)
+	book_btn.add_theme_stylebox_override("hover", b_hov)
+	book_btn.add_theme_color_override("font_color", C_CREAM)
+	book_btn.add_theme_color_override("font_hover_color", C_PANEL_DARK)
+	if _body_font: book_btn.add_theme_font_override("font", _body_font)
+	
+	book_btn.pressed.connect(func():
+		var artist : String = _room.get("artist", "ARTIST").replace("\n", " ")
+		var url = "https://www.ticketmaster.com/search?q=" + artist.replace(" ", "%20")
+		OS.shell_open(url)
+		AudioManager.play("click")
+	)
+	vbox.add_child(book_btn)
 	
 	# 2. The toggle button for AI History
 	_ai_toggle_btn = Button.new()

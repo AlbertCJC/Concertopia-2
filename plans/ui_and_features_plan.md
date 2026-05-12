@@ -23,17 +23,17 @@
 - **Data:** Add `avatar_history` (Array) and `nft_history` (Array) to `AuthManager.current_user`.
 - **Persistence:** Update Supabase `profiles` table logic to include these fields.
 - **Screen:** Create `screens/vault.tscn`.
-    - Tabbed view: "Avatars" vs "NFTs".
-    - Grid of `TextureRect` previews.
-    - "Set as Active" button for avatars.
+	- Tabbed view: "Avatars" vs "NFTs".
+	- Grid of `TextureRect` previews.
+	- "Set as Active" button for avatars.
 - **Navigation:** Add "VAULT" button to `home.gd` top bar.
 
 ### 2.2 Daily Login Rewards
 - **Goal:** Increase user retention.
 - **Logic:**
-    - `AuthManager` tracks `last_login_reward_date`.
-    - Upon login, compare current date with `last_login_reward_date`.
-    - If new day: Grant 1 Credit and update `last_login_reward_date`.
+	- `AuthManager` tracks `last_login_reward_date`.
+	- Upon login, compare current date with `last_login_reward_date`.
+	- If new day: Grant 1 Credit and update `last_login_reward_date`.
 - **UI:** Show a non-intrusive "Daily Reward Claimed: +1 Credit" toast/popup on the homepage.
 
 ---
@@ -50,7 +50,7 @@ The `update_user_details` function will be expanded to handle:
 ```gdscript
 # AudioManager.gd
 func play_sfx(sfx_name: String) -> void:
-    # Logic to load and play from res://audio/sfx/
+	# Logic to load and play from res://audio/sfx/
 ```
 
 ### Vault Data Structure
