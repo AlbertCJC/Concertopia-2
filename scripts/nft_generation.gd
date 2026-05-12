@@ -299,9 +299,10 @@ func _on_request_completed(result: int, response_code: int, headers: PackedStrin
 			mint_btn.visible = true
 			
 			# Save to vault cache for immediate availability
-			if not DirAccess.dir_exists_absolute("user://vault_cache"):
-				DirAccess.make_dir_absolute("user://vault_cache")
-			var cache_path = "user://vault_cache/" + str(_last_generated_url.hash()) + ".png"
+			var vault_dir = AuthManager.get_vault_cache_dir()
+			if not DirAccess.dir_exists_absolute(vault_dir):
+				DirAccess.make_dir_absolute(vault_dir)
+			var cache_path = vault_dir + str(_last_generated_url.hash()) + ".png"
 			image.save_png(cache_path)
 			
 			AudioManager.play("success")

@@ -134,9 +134,9 @@ func _build_ui() -> void:
 
 	# ── App section ───────────────────────────────────────────────────────────
 	_add_section_label(vbox, "APP")
-	_add_toggle_row(vbox, "> Sound Effects",    true)
-	_add_toggle_row(vbox, "> Background Music",  true)
-	_add_toggle_row(vbox, "> Notifications",     false)
+	_add_toggle_row(vbox, "> Sound Effects",    AudioManager.is_sfx_enabled(),   AudioManager.set_sfx_enabled)
+	_add_toggle_row(vbox, "> Background Music",  AudioManager.is_music_enabled(), AudioManager.set_music_enabled)
+	_add_toggle_row(vbox, "> Notifications",     false, func(v): pass) # Placeholder for now
 
 	_add_divider(vbox)
 
@@ -212,7 +212,7 @@ func _add_action_btn(
 	btn.pressed.connect(callback)
 	parent.add_child(btn)
 
-func _add_toggle_row(parent: Control, label: String, default_on: bool) -> void:
+func _add_toggle_row(parent: Control, label: String, default_on: bool, callback: Callable) -> void:
 	var row := HBoxContainer.new()
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(row)
@@ -227,17 +227,15 @@ func _add_toggle_row(parent: Control, label: String, default_on: bool) -> void:
 	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(lbl)
 
-	# Simple ON/OFF label toggle (no CheckBox which needs a theme)
+	# Simple ON/OFF label toggle
 	var toggle := Button.new()
 	toggle.text = "ON" if default_on else "OFF"
 	toggle.custom_minimum_size = Vector2(48, 26)
 	var ts := StyleBoxFlat.new()
 	ts.bg_color = C_PINK if default_on else Color(0.3, 0.3, 0.3)
 	ts.set_corner_radius_all(0)
-	ts.border_width_left = 2
-	ts.border_width_right = 2
-	ts.border_width_top = 2
-	ts.border_width_bottom = 2
+	ts.border_width_left = 2; ts.border_width_right = 2
+	ts.border_width_top = 2; ts.border_width_bottom = 2
 	ts.border_color = Color(1, 1, 1) if default_on else Color(0.3, 0.3, 0.3)
 	toggle.add_theme_stylebox_override("normal",  ts)
 	toggle.add_theme_stylebox_override("hover",   ts)
@@ -245,21 +243,22 @@ func _add_toggle_row(parent: Control, label: String, default_on: bool) -> void:
 	toggle.add_theme_color_override("font_color", Color(1, 1, 1))
 	toggle.add_theme_font_size_override("font_size", 12)
 	if _pixel_font: toggle.add_theme_font_override("font", _pixel_font)
-	var is_on : bool = default_on
+	
+	var state = { "on": default_on }
 	toggle.pressed.connect(func() -> void:
-		is_on = not is_on
-		toggle.text = "ON" if is_on else "OFF"
-		var new_style := StyleBoxFlat.new()
-		new_style.bg_color = C_PINK if is_on else Color(0.3, 0.3, 0.3)
-		new_style.set_corner_radius_all(0)
-		new_style.border_width_left = 2
-		new_style.border_width_right = 2
-		new_style.border_width_top = 2
-		new_style.border_width_bottom = 2
-		new_style.border_color = Color(1, 1, 1) if is_on else Color(0.3, 0.3, 0.3)
-		toggle.add_theme_stylebox_override("normal",  new_style)
-		toggle.add_theme_stylebox_override("hover",   new_style)
-		toggle.add_theme_stylebox_override("pressed", new_style)
+		state.on = not state.on
+		toggle.text = "ON" if state.on else "OFF"
+		var ns := StyleBoxFlat.new()
+		ns.bg_color = C_PINK if state.on else Color(0.3, 0.3, 0.3)
+		ns.set_corner_radius_all(0)
+		ns.border_width_left = 2; ns.border_width_right = 2
+		ns.border_width_top = 2; ns.border_width_bottom = 2
+		ns.border_color = Color(1, 1, 1) if state.on else Color(0.3, 0.3, 0.3)
+		toggle.add_theme_stylebox_override("normal",  ns)
+		toggle.add_theme_stylebox_override("hover",   ns)
+		toggle.add_theme_stylebox_override("pressed", ns)
+		callback.call(state.on)
+		AudioManager.play("click")
 	)
 	row.add_child(toggle)
 

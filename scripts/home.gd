@@ -721,11 +721,12 @@ func _load_topbar_avatar() -> void:
 	_topbar_avatar.texture = default_tex
 	
 	var avatar_url = AuthManager.current_user.get("avatar_url", "")
+	var avatar_path = AuthManager.get_active_avatar_path()
 	
 	# If we have a local file from a recent generation, use it
-	if FileAccess.file_exists("user://avatar.png"):
+	if FileAccess.file_exists(avatar_path):
 		var image = Image.new()
-		var err = image.load("user://avatar.png")
+		var err = image.load(avatar_path)
 		if err == OK:
 			_topbar_avatar.texture = ImageTexture.create_from_image(image)
 			return
@@ -743,7 +744,7 @@ func _load_topbar_avatar() -> void:
 				
 				if err == OK:
 					_topbar_avatar.texture = ImageTexture.create_from_image(image)
-					image.save_png("user://avatar.png")
+					image.save_png(avatar_path)
 			http.queue_free()
 		)
 		http.request(avatar_url)

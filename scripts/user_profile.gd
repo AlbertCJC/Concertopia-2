@@ -193,9 +193,10 @@ func _build_ui() -> void:
 	btn_vbox.add_child(edit_av_btn)
 
 func _load_avatar() -> void:
-	if FileAccess.file_exists("user://avatar.png"):
+	var avatar_path = AuthManager.get_active_avatar_path()
+	if FileAccess.file_exists(avatar_path):
 		var image = Image.new()
-		if image.load("user://avatar.png") == OK:
+		if image.load(avatar_path) == OK:
 			avatar_rect.texture = ImageTexture.create_from_image(image)
 			return
 			
@@ -210,7 +211,7 @@ func _load_avatar() -> void:
 				var image = Image.new()
 				if image.load_jpg_from_buffer(body) == OK or image.load_png_from_buffer(body) == OK or image.load_webp_from_buffer(body) == OK:
 					avatar_rect.texture = ImageTexture.create_from_image(image)
-					image.save_png("user://avatar.png")
+					image.save_png(avatar_path)
 			http.queue_free()
 		)
 		http.request(avatar_url)

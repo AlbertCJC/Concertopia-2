@@ -531,3 +531,15 @@ func claim_daily_reward() -> bool:
 		"last_reward_date": today
 	})
 	return true
+
+## Get the local path for the current user's active avatar
+func get_active_avatar_path() -> String:
+	if user_id.is_empty():
+		return "user://avatar_guest.png"
+	return "user://avatar_%s.png" % user_id
+
+## Get the local vault cache directory for the current user
+func get_vault_cache_dir() -> String:
+	if user_id.is_empty():
+		return "user://vault_guest/"
+	return "user://vault_%s/" % user_id

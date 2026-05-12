@@ -283,15 +283,17 @@ func _on_request_completed(result: int, response_code: int, headers: PackedStrin
 			AudioManager.play("success")
 			
 			# Save as active avatar
-			image.save_png("user://avatar.png")
+			var avatar_path = AuthManager.get_active_avatar_path()
+			image.save_png(avatar_path)
 			
 			# Save to vault cache for history consistency
-			if not DirAccess.dir_exists_absolute("user://vault_cache"):
-				DirAccess.make_dir_absolute("user://vault_cache")
-			var cache_path = "user://vault_cache/" + str(AuthManager.current_user["avatar_url"].hash()) + ".png"
+			var vault_dir = AuthManager.get_vault_cache_dir()
+			if not DirAccess.dir_exists_absolute(vault_dir):
+				DirAccess.make_dir_absolute(vault_dir)
+			var cache_path = vault_dir + str(AuthManager.current_user["avatar_url"].hash()) + ".png"
 			image.save_png(cache_path)
 			
-			AuthManager.current_user["avatar_path"] = "user://avatar.png"
+			AuthManager.current_user["avatar_path"] = avatar_path
 			AuthManager.add_to_avatar_history(AuthManager.current_user["avatar_url"])
 			
 			var current_credits = AuthManager.current_user.get("avatar_credits", 0)
