@@ -399,6 +399,150 @@ func _hide_cinema() -> void:
 	tw.tween_property(_cinema_overlay, "modulate:a", 0.0, 0.2)
 	tw.chain().tween_callback(func(): _cinema_overlay.visible = false)
 
+# ── AI Artist Chat ────────────────────────────────────────────────────────────
+var _chat_panel   : PanelContainer = null
+var _chat_log     : RichTextLabel = null
+var _chat_input   : LineEdit      = null
+var _chat_open    : bool = false
+var _chat_loading : bool = false
+var _chat_toggle_btn : Button = null
+var _chat_http    : HTTPRequest = null
+
+func _build_chat_ui() -> void:
+	var acc : Color = _room.get("accent", C_PINK)
+	
+	_chat_http = HTTPRequest.new()
+	add_child(_chat_http)
+	_chat_http.request_completed.connect(_on_chat_request_completed)
+	
+	# 1. Floating Toggle Button
+	_chat_toggle_btn = Button.new()
+	_chat_toggle_btn.text = "💬 CHAT WITH ARTIST"
+	_chat_toggle_btn.anchor_left = 1.0; _chat_toggle_btn.anchor_top = 1.0
+	_chat_toggle_btn.anchor_right = 1.0; _chat_toggle_btn.anchor_bottom = 1.0
+	_chat_toggle_btn.offset_left = -220; _chat_toggle_btn.offset_top = -60
+	_chat_toggle_btn.offset_right = -30; _chat_toggle_btn.offset_bottom = -20
+	_chat_toggle_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	
+	var style := _flat(C_PANEL, 20)
+	style.border_width_left = 2; style.border_width_right = 2
+	style.border_width_top = 2; style.border_width_bottom = 2
+	style.border_color = acc
+	_chat_toggle_btn.add_theme_stylebox_override("normal", style)
+	_chat_toggle_btn.add_theme_stylebox_override("hover", _flat(acc, 20))
+	_chat_toggle_btn.add_theme_color_override("font_color", Color.WHITE)
+	_chat_toggle_btn.add_theme_color_override("font_hover_color", C_PANEL_DARK)
+	if _pixel_font: _chat_toggle_btn.add_theme_font_override("font", _pixel_font)
+	_chat_toggle_btn.pressed.connect(_toggle_chat)
+	add_child(_chat_toggle_btn)
+	
+	# 2. Chat Panel
+	_chat_panel = PanelContainer.new()
+	_chat_panel.anchor_left = 1.0; _chat_panel.anchor_top = 1.0
+	_chat_panel.anchor_right = 1.0; _chat_panel.anchor_bottom = 1.0
+	_chat_panel.offset_left = -400; _chat_panel.offset_top = -500
+	_chat_panel.offset_right = -30; _chat_panel.offset_bottom = -70
+	_chat_panel.visible = false
+	
+	var p_style := _flat(C_PANEL_DARK, 15)
+	p_style.border_width_left = 3; p_style.border_color = acc
+	p_style.shadow_color = Color(0,0,0,0.6); p_style.shadow_size = 20
+	_chat_panel.add_theme_stylebox_override("panel", p_style)
+	add_child(_chat_panel)
+	
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 10)
+	_chat_panel.add_child(vbox)
+	
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 15); margin.add_theme_constant_override("margin_right", 15)
+	margin.add_theme_constant_override("margin_top", 15); margin.add_theme_constant_override("margin_bottom", 15)
+	margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	vbox.add_child(margin)
+	
+	var inner_vbox := VBoxContainer.new()
+	inner_vbox.add_theme_constant_override("separation", 10)
+	margin.add_child(inner_vbox)
+	
+	var title_lbl := Label.new()
+	title_lbl.text = "LIVE CHAT: " + _room.get("artist", "ARTIST").replace("\n", " ")
+	title_lbl.add_theme_color_override("font_color", acc)
+	if _pixel_font: title_lbl.add_theme_font_override("font", _pixel_font)
+	inner_vbox.add_child(title_lbl)
+	
+	_chat_log = RichTextLabel.new()
+	_chat_log.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_chat_log.bbcode_enabled = true
+	_chat_log.scroll_following = true
+	_chat_log.add_theme_color_override("default_color", C_CREAM)
+	if _body_font: _chat_log.add_theme_font_override("normal_font", _body_font)
+	_chat_log.text = "[color=#888888]Connected to Artist Instance...[/color]\n"
+	inner_vbox.add_child(_chat_log)
+	
+	var input_hbox := HBoxContainer.new()
+	vbox.add_child(input_hbox)
+	
+	_chat_input = LineEdit.new()
+	_chat_input.placeholder_text = "Say something..."
+	_chat_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_chat_input.custom_minimum_size = Vector2(0, 40)
+	var i_style := _flat(Color.WHITE, 0); i_style.content_margin_left = 10
+	_chat_input.add_theme_stylebox_override("normal", i_style)
+	_chat_input.add_theme_color_override("font_color", Color.BLACK)
+	_chat_input.text_submitted.connect(_on_chat_submitted)
+	input_hbox.add_child(_chat_input)
+	
+	var send_btn := Button.new()
+	send_btn.text = "SEND"
+	send_btn.custom_minimum_size = Vector2(80, 0)
+	send_btn.add_theme_stylebox_override("normal", _flat(acc, 0))
+	send_btn.add_theme_color_override("font_color", C_PANEL_DARK)
+	if _pixel_font: send_btn.add_theme_font_override("font", _pixel_font)
+	send_btn.pressed.connect(func(): _on_chat_submitted(_chat_input.text))
+	input_hbox.add_child(send_btn)
+
+func _toggle_chat() -> void:
+	_chat_open = !_chat_open
+	_chat_panel.visible = _chat_open
+	if _chat_open:
+		_chat_input.grab_focus()
+		_chat_toggle_btn.text = "✖ CLOSE CHAT"
+		AudioManager.play("click")
+	else:
+		_chat_toggle_btn.text = "💬 CHAT WITH ARTIST"
+
+func _on_chat_submitted(text: String) -> void:
+	if text.strip_edges().is_empty() or _chat_loading: return
+	
+	_chat_log.text += "\n[b]You:[/b] " + text + "\n"
+	_chat_input.text = ""
+	_chat_loading = true
+	
+	var artist = _room.get("artist", "ARTIST").replace("\n", " ")
+	var user_name = AuthManager.current_user.get("display_name", "Fan")
+	
+	var prompt = "You are %s, the famous music artist. A fan named %s is talking to you in a virtual concert room. Respond as %s in a brief, friendly, and authentic way. Be cool, use some emoji, and stay in character. The fan says: %s" % [artist, user_name, artist, text]
+	var url = "https://text.pollinations.ai/" + prompt.uri_encode()
+	
+	_chat_log.text += "[color=#f56b9e][i]... %s is typing ...[/i][/color]\n" % artist
+	_chat_http.request(url)
+
+func _on_chat_request_completed(_res, code, _hdrs, body) -> void:
+	_chat_loading = false
+	# Remove "typing" indicator (last line)
+	var lines = _chat_log.text.split("\n")
+	if lines.size() > 0:
+		lines.remove_at(lines.size() - 1)
+		_chat_log.text = "\n".join(lines)
+		
+	if code == 200:
+		var response = body.get_string_from_utf8()
+		var artist = _room.get("artist", "ARTIST").replace("\n", " ")
+		_chat_log.text += "\n[b]%s:[/b] %s\n" % [artist, response]
+		AudioManager.play("hover")
+	else:
+		_chat_log.text += "\n[color=red]System: Artist is busy backstage. Try again later.[/color]\n"
+
 func _on_watch_in_theatre_pressed() -> void:
 	if not _cinema_active_id.is_empty():
 		OS.shell_open("https://www.youtube.com/watch?v=" + _cinema_active_id)
@@ -440,6 +584,7 @@ func _build_ui() -> void:
 	_build_top_bar()
 	_build_journey_scroll()
 	_build_ai_ui()
+	_build_chat_ui()
 
 # ── TOP BAR ────────────────────────────────────────────────────────────────────
 func _add_topbar_credits_indicator(parent: Control) -> void:

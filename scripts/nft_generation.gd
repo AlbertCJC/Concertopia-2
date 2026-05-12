@@ -21,6 +21,7 @@ var pixel_font : FontFile
 var body_font  : FontFile
 
 var prompt_edit : LineEdit
+var poster_toggle : CheckButton
 var generate_btn : Button
 var back_btn : Button
 var mint_btn : Button
@@ -152,6 +153,25 @@ func _build_ui() -> void:
 	prompt_label.add_theme_color_override("font_color", C_GOLD)
 	if pixel_font: prompt_label.add_theme_font_override("font", pixel_font)
 	right_vbox.add_child(prompt_label)
+	
+	# Poster Mode Toggle
+	var mode_hbox := HBoxContainer.new()
+	mode_hbox.add_theme_constant_override("separation", 15)
+	right_vbox.add_child(mode_hbox)
+	
+	poster_toggle = CheckButton.new()
+	poster_toggle.text = "POSTER MODE"
+	poster_toggle.add_theme_color_override("font_color", C_CREAM)
+	if body_font: poster_toggle.add_theme_font_override("font", body_font)
+	poster_toggle.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	mode_hbox.add_child(poster_toggle)
+	
+	var mode_info := Label.new()
+	mode_info.text = "(Adds Artist & Your Name to Art)"
+	mode_info.add_theme_color_override("font_color", C_MUTED)
+	mode_info.add_theme_font_size_override("font_size", 10)
+	if body_font: mode_info.add_theme_font_override("font", body_font)
+	mode_hbox.add_child(mode_info)
 
 	prompt_edit = LineEdit.new()
 	prompt_edit.placeholder_text = "e.g. A futuristic neon concert stage with holographic crowds"
@@ -276,7 +296,15 @@ func _on_generate_pressed() -> void:
 	tw.tween_property(nft_rect.get_parent(), "position:x", -20, 0.05).as_relative()
 	tw.tween_property(nft_rect.get_parent(), "position:x", 10, 0.05).as_relative()
 
-	var base_prompt = "A high-quality 16-bit pixel art illustration, retro video game style, perfect pixel precision. Subject: "
+	var base_prompt = "A high-quality 16-bit pixel art illustration, retro video game style, perfect pixel precision. "
+	
+	if poster_toggle.button_pressed:
+		var artist_name = RoomRegistry.current_room.get("artist", "The Global Artist").replace("\n", " ")
+		var user_name = AuthManager.current_user.get("display_name", "Fan")
+		base_prompt = "A retro 16-bit concert poster layout, pixel art style. The artwork prominently features the text '%s LIVE' and 'FEATURING %s'. Style: " % [artist_name.to_upper(), user_name.to_upper()]
+	else:
+		base_prompt += "Subject: "
+
 	var style_prompt = ". Vibrant colors, crisp pixel edges, nostalgic aesthetic, flat background."
 	var full_prompt = base_prompt + prompt + style_prompt
 	var safe_prompt = full_prompt.uri_encode()

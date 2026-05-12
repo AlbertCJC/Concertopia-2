@@ -245,6 +245,21 @@ func _create_item_card(url: String, type: String, idx: int, meta: Dictionary = {
 			l.text = "MINTED: %02d/%02d" % [d.day, d.month]
 		else: l.text = "COLLECTIBLE"
 		info.add_child(l)
+		
+	# 4. Export Button (Always visible on hover, but we add it to a sub-overlay for clarity)
+	var export_btn := Button.new()
+	export_btn.text = "SAVE TO DEVICE"
+	export_btn.custom_minimum_size = Vector2(0, 32)
+	export_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var ex_style := StyleBoxFlat.new()
+	ex_style.bg_color = Color(0, 0, 0, 0.7)
+	ex_style.set_corner_radius_all(4)
+	export_btn.add_theme_stylebox_override("normal", ex_style)
+	export_btn.add_theme_color_override("font_color", Color.WHITE)
+	export_btn.add_theme_font_size_override("font_size", 10)
+	if pixel_font: export_btn.add_theme_font_override("font", pixel_font)
+	export_btn.visible = false # Only show on hover
+	overlay.add_child(export_btn)
 
 	# 5. Load Logic (Cache-First)
 	var cache_dir = AuthManager.get_vault_cache_dir()
@@ -265,14 +280,21 @@ func _create_item_card(url: String, type: String, idx: int, meta: Dictionary = {
 	card.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	card.mouse_entered.connect(func():
 		create_tween().tween_property(card, "modulate", Color(1.2, 1.2, 1.2), 0.1)
+		export_btn.visible = true
 		AudioManager.play("hover")
 	)
 	card.mouse_exited.connect(func():
 		create_tween().tween_property(card, "modulate", Color(1.0, 1.0, 1.0), 0.1)
+		export_btn.visible = false
 	)
 	card.gui_input.connect(func(event):
 		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 			if type == "avatar": _apply_choice(url)
+	)
+	
+	export_btn.pressed.connect(func():
+		var final_path = avatar_path if (is_active and FileAccess.file_exists(avatar_path)) else cache_path
+		_on_export_pressed(final_path)
 	)
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -339,6 +361,27 @@ func _apply_choice(url: String) -> void:
 	
 	UIUtils.show_toast("Identity Updated!", C_PINK)
 	_load_avatars()
+
+func _on_export_pressed(source_path: String) -> void:
+	if not FileAccess.file_exists(source_path):
+		UIUtils.show_toast("Error: Source file missing.", Color(1, 0.4, 0.4))
+		return
+		
+	var filename = "Concertopia_" + str(Time.get_unix_time_from_system()) + ".png"
+	var dest_dir = OS.get_system_dir(OS.SYSTEM_DIR_PICTURES)
+	var dest_path = dest_dir + "/" + filename
+	
+	var img = Image.load_from_file(source_path)
+	if img:
+		var err = img.save_png(dest_path)
+		if err == OK:
+			UIUtils.show_toast("Saved to Pictures!", Color(0.4, 1.0, 0.5))
+			AudioManager.play("success")
+			print("[VAULT] Exported to: ", dest_path)
+		else:
+			UIUtils.show_toast("Export failed.", Color(1, 0.4, 0.4))
+	else:
+		UIUtils.show_toast("Failed to load image.", Color(1, 0.4, 0.4))
 
 func _clear_view() -> void:
 	for c in grid_container.get_children(): c.queue_free()
