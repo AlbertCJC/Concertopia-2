@@ -88,11 +88,11 @@ func _build_ui() -> void:
 	feature_margin.add_child(feature_vbox)
 
 	var features : Array[String] = [
-		"🎸  Artist Selection - Pick from a lineup of musicians.",
-		"🎵  Surprise Tracks - Enjoy random tracks every time.",
-		"💬  Live Chat - Talk with other fans during concerts.",
-		"🎤  Sing-Along Mode - Follow the lyrics and sing out loud.",
-		"🤖  AI Avatar Lab - Create your custom concert identity.",
+		"🎨  AI Avatar Lab - Create a unique 16-bit concert identity.",
+		"🏟️  Virtual Front Row - Experience concerts from global superstars.",
+		"💎  Digital Collectibles - Mint and trade AI-generated concert NFTs.",
+		"🤝  Social Hub - Connect with thousands of fans in real-time.",
+		"🎟️  Exclusive Drops - Access limited tracks and legendary artist rooms.",
 	]
 	for line : String in features:
 		var lbl := Label.new()

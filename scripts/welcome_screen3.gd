@@ -65,7 +65,7 @@ func _build_ui() -> void:
 	centre.add_child(heading)
 
 	var body := Label.new()
-	body.text = "\"Step into a new world of music! Choose your favorite artist, enjoy random tracks, and connect with fans worldwide - all in vibrant pixel art.\""
+	body.text = "\"Step into the next generation of music social networking. Generate your avatar, claim your spot in the crowd, and witness the fusion of AI art and live performance.\""
 	body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	body.autowrap_mode        = TextServer.AUTOWRAP_WORD_SMART
 	body.add_theme_color_override("font_color", Color(1, 1, 1))

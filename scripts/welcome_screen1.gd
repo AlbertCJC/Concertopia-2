@@ -70,7 +70,7 @@ func _build_ui() -> void:
 	centre.add_child(sp)
 
 	var tagline := Label.new()
-	tagline.text = "Reimagining Concerts Through Pixel Art"
+	tagline.text = "The Ultimate AI-Powered Virtual Concert Experience"
 	tagline.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	tagline.add_theme_color_override("font_color", Color(0.96, 0.42, 0.62))
 	tagline.add_theme_font_size_override("font_size", 14)

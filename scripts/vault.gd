@@ -18,11 +18,15 @@ var pixel_font : FontFile
 var body_font  : FontFile
 
 # ── UI Nodes ───────────────────────────────────────────────────────────────────
-var grid_container : GridContainer
-var scroll_area    : ScrollContainer
-var av_tab_btn     : Button
-var nft_tab_btn    : Button
-var empty_state    : VBoxContainer
+var grid_container  : GridContainer
+var scroll_area     : ScrollContainer
+var av_tab_btn      : Button
+var nft_tab_btn     : Button
+var global_save_btn : Button
+var empty_state     : VBoxContainer
+
+var _selected_path  : String = ""
+var _selected_card  : PanelContainer = null
 
 # ── Lifecycle ──────────────────────────────────────────────────────────────────
 func _ready() -> void:
@@ -60,6 +64,12 @@ func _exit_tree() -> void:
 	print("[VAULT] Scene Exited.")
 
 func _on_refresh_data(_u = null) -> void:
+	_selected_path = ""
+	_selected_card = null
+	if global_save_btn:
+		global_save_btn.disabled = true
+		global_save_btn.modulate.a = 0.5
+		
 	# Check current tab and refresh
 	if av_tab_btn.modulate == Color.WHITE:
 		_load_avatars()
@@ -94,7 +104,7 @@ func _build_ui() -> void:
 
 	# 3. Header
 	var header := HBoxContainer.new()
-	header.custom_minimum_size = Vector2(0, 80)
+	header.custom_minimum_size = Vector2(0, 100)
 	main_vbox.add_child(header)
 
 	var title := Label.new()
@@ -108,9 +118,20 @@ func _build_ui() -> void:
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(spacer)
 
+	var header_btns := VBoxContainer.new()
+	header_btns.alignment = BoxContainer.ALIGNMENT_CENTER
+	header_btns.add_theme_constant_override("separation", 10)
+	header.add_child(header_btns)
+
 	var back_btn := _styled_button("BACK TO HOME", C_PINK, Color.WHITE)
 	back_btn.pressed.connect(func(): get_tree().change_scene_to_file(HOME_SCENE))
-	header.add_child(back_btn)
+	header_btns.add_child(back_btn)
+	
+	global_save_btn = _styled_button("SAVE TO GALLERY", C_GOLD, Color.BLACK)
+	global_save_btn.disabled = true
+	global_save_btn.modulate.a = 0.5
+	global_save_btn.pressed.connect(func(): _on_export_pressed(_selected_path))
+	header_btns.add_child(global_save_btn)
 
 	# 4. Navigation
 	var nav := HBoxContainer.new()
@@ -167,6 +188,11 @@ func _build_ui() -> void:
 func _load_avatars() -> void:
 	_clear_view()
 	_set_active_tab("avatar")
+	_selected_path = ""
+	_selected_card = null
+	global_save_btn.disabled = true
+	global_save_btn.modulate.a = 0.5
+	
 	var history = AuthManager.current_user.get("avatar_history", [])
 	if history.is_empty():
 		_toggle_empty(true)
@@ -177,6 +203,11 @@ func _load_avatars() -> void:
 func _load_nfts() -> void:
 	_clear_view()
 	_set_active_tab("nft")
+	_selected_path = ""
+	_selected_card = null
+	global_save_btn.disabled = true
+	global_save_btn.modulate.a = 0.5
+
 	var history = AuthManager.current_user.get("nft_history", [])
 	if history.is_empty():
 		_toggle_empty(true)
@@ -246,26 +277,32 @@ func _create_item_card(url: String, type: String, idx: int, meta: Dictionary = {
 		else: l.text = "COLLECTIBLE"
 		info.add_child(l)
 		
-	# 4. Export Button (Always visible on hover, but we add it to a sub-overlay for clarity)
-	var export_btn := Button.new()
-	export_btn.text = "SAVE TO DEVICE"
-	export_btn.custom_minimum_size = Vector2(0, 32)
-	export_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	var ex_style := StyleBoxFlat.new()
-	ex_style.bg_color = Color(0, 0, 0, 0.7)
-	ex_style.set_corner_radius_all(4)
-	export_btn.add_theme_stylebox_override("normal", ex_style)
-	export_btn.add_theme_color_override("font_color", Color.WHITE)
-	export_btn.add_theme_font_size_override("font_size", 10)
-	if pixel_font: export_btn.add_theme_font_override("font", pixel_font)
-	export_btn.visible = false # Only show on hover
-	overlay.add_child(export_btn)
+	# 4. Download Button (Icon-style)
+	var dl_btn := Button.new()
+	dl_btn.text = "⬇"
+	dl_btn.custom_minimum_size = Vector2(40, 40)
+	dl_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var dl_style := StyleBoxFlat.new()
+	dl_style.bg_color = Color(0, 0, 0, 0.7)
+	dl_style.set_corner_radius_all(20)
+	dl_btn.add_theme_stylebox_override("normal", dl_style)
+	dl_btn.add_theme_color_override("font_color", Color.WHITE)
+	dl_btn.add_theme_font_size_override("font_size", 20)
+	dl_btn.visible = false # Show on selection or hover
+	
+	var dl_pos = Control.new()
+	dl_pos.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	dl_pos.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	dl_pos.add_child(dl_btn)
+	dl_btn.position = Vector2(-50, -50)
+	card.add_child(dl_pos)
 
 	# 5. Load Logic (Cache-First)
 	var cache_dir = AuthManager.get_vault_cache_dir()
 	var cache_path = cache_dir + str(url.hash()) + ".png"
 	var avatar_path = AuthManager.get_active_avatar_path()
-	
+	var final_path = avatar_path if (is_active and FileAccess.file_exists(avatar_path)) else cache_path
+
 	# Priority 1: Check Global Active Cache
 	if is_active and FileAccess.file_exists(avatar_path):
 		_set_texture_from_path(avatar_path, tex)
@@ -279,21 +316,50 @@ func _create_item_card(url: String, type: String, idx: int, meta: Dictionary = {
 	# 6. Interaction
 	card.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	card.mouse_entered.connect(func():
-		create_tween().tween_property(card, "modulate", Color(1.2, 1.2, 1.2), 0.1)
-		export_btn.visible = true
+		if _selected_card != card:
+			create_tween().tween_property(card, "modulate", Color(1.2, 1.2, 1.2), 0.1)
+		dl_btn.visible = true
 		AudioManager.play("hover")
 	)
 	card.mouse_exited.connect(func():
-		create_tween().tween_property(card, "modulate", Color(1.0, 1.0, 1.0), 0.1)
-		export_btn.visible = false
-	)
-	card.gui_input.connect(func(event):
-		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			if type == "avatar": _apply_choice(url)
+		if _selected_card != card:
+			create_tween().tween_property(card, "modulate", Color(1.0, 1.0, 1.0), 0.1)
+			dl_btn.visible = false
 	)
 	
-	export_btn.pressed.connect(func():
-		var final_path = avatar_path if (is_active and FileAccess.file_exists(avatar_path)) else cache_path
+	card.gui_input.connect(func(event):
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			# Selection Logic
+			if _selected_card:
+				_selected_card.get_theme_stylebox("panel").border_width_left = 6
+				_selected_card.get_theme_stylebox("panel").border_width_right = 6
+				_selected_card.get_theme_stylebox("panel").border_width_top = 6
+				_selected_card.get_theme_stylebox("panel").border_width_bottom = 6
+				_selected_card.modulate = Color.WHITE
+			
+			_selected_card = card
+			_selected_path = final_path
+			
+			# Highlight selection
+			var active_style = card.get_theme_stylebox("panel").duplicate()
+			active_style.border_width_left = 10
+			active_style.border_width_right = 10
+			active_style.border_width_top = 10
+			active_style.border_width_bottom = 10
+			card.add_theme_stylebox_override("panel", active_style)
+			card.modulate = Color(1.3, 1.3, 1.3)
+			
+			# Enable global button
+			global_save_btn.disabled = false
+			global_save_btn.modulate.a = 1.0
+			
+			if type == "avatar": 
+				_apply_choice(url)
+			
+			AudioManager.play("click")
+	)
+	
+	dl_btn.pressed.connect(func():
 		_on_export_pressed(final_path)
 	)
 
@@ -367,19 +433,38 @@ func _on_export_pressed(source_path: String) -> void:
 		UIUtils.show_toast("Error: Source file missing.", Color(1, 0.4, 0.4))
 		return
 		
-	var filename = "Concertopia_" + str(Time.get_unix_time_from_system()) + ".png"
+	# On Android, we may need to request permissions for older versions,
+	# though Scoped Storage is the norm now.
+	if OS.get_name() == "Android":
+		OS.request_permissions()
+		
+	var filename = "Concertopia_%d.png" % Time.get_unix_time_from_system()
+	
+	# Attempt to find a valid system directory
 	var dest_dir = OS.get_system_dir(OS.SYSTEM_DIR_PICTURES)
-	var dest_path = dest_dir + "/" + filename
+	if dest_dir.is_empty():
+		dest_dir = OS.get_system_dir(OS.SYSTEM_DIR_DCIM)
+	if dest_dir.is_empty():
+		dest_dir = OS.get_system_dir(OS.SYSTEM_DIR_DOWNLOADS)
+	if dest_dir.is_empty():
+		dest_dir = OS.get_user_data_dir()
+		
+	# Use path_join for cross-platform safety
+	var dest_path = dest_dir.path_join(filename)
 	
 	var img = Image.load_from_file(source_path)
 	if img:
 		var err = img.save_png(dest_path)
 		if err == OK:
-			UIUtils.show_toast("Saved to Pictures!", Color(0.4, 1.0, 0.5))
+			UIUtils.show_toast("Saved to Gallery!", Color(0.4, 1.0, 0.5))
 			AudioManager.play("success")
 			print("[VAULT] Exported to: ", dest_path)
 		else:
-			UIUtils.show_toast("Export failed.", Color(1, 0.4, 0.4))
+			print("[VAULT] Export failed. Error code: ", err)
+			if err == ERR_FILE_CANT_WRITE:
+				UIUtils.show_toast("Permission Denied", Color(1, 0.4, 0.4))
+			else:
+				UIUtils.show_toast("Export failed.", Color(1, 0.4, 0.4))
 	else:
 		UIUtils.show_toast("Failed to load image.", Color(1, 0.4, 0.4))
 
