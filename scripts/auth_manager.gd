@@ -22,7 +22,6 @@ const SAVE_PATH := "user://session.json"
 # ══════════════════════════════════════════════════════════════════════════════
 const GOOGLE_CLIENT_ID     : String = "158219607556-m8pcp6soiia4p61p72ntuf4amuf2lrqi.apps.googleusercontent.com"
 const GOOGLE_CLIENT_SECRET : String = "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"
-const GOOGLE_REDIRECT_URI  : String = "http://localhost:7123/"
 const GOOGLE_AUTH_URL      : String = "https://accounts.google.com/o/oauth2/v2/auth"
 const GOOGLE_TOKEN_URL     : String = "https://oauth2.googleapis.com/token"
 const GOOGLE_USERINFO_URL  : String = "https://www.googleapis.com/oauth2/v3/userinfo"
@@ -30,11 +29,19 @@ const GOOGLE_SCOPES        : String = "openid email profile"
 
 const FACEBOOK_APP_ID      : String = "YOUR_FACEBOOK_APP_ID"
 const FACEBOOK_APP_SECRET  : String = "YOUR_FACEBOOK_APP_SECRET"
-const FACEBOOK_REDIRECT_URI: String = "http://localhost:7123/"
 const FACEBOOK_AUTH_URL    : String = "https://www.facebook.com/v19.0/dialog/oauth"
 const FACEBOOK_TOKEN_URL   : String = "https://graph.facebook.com/v19.0/oauth/access_token"
 const FACEBOOK_USERINFO_URL: String = "https://graph.facebook.com/me?fields=id,name,email,picture"
 const FACEBOOK_SCOPES      : String = "email,public_profile"
+
+# Redirect URIs: Standard localhost for PC, custom scheme for Mobile
+const REDIRECT_URI_PC      : String = "http://localhost:7123/"
+const REDIRECT_URI_MOBILE  : String = "concertopia://auth"
+
+func _get_redirect_uri() -> String:
+	if OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios"):
+		return REDIRECT_URI_MOBILE
+	return REDIRECT_URI_PC
 
 # ── State ──────────────────────────────────────────────────────────────────────
 var current_user  : Dictionary = {}
@@ -92,6 +99,33 @@ func _ready() -> void:
 	
 	OAuthServer.oauth_code_received.connect(_on_oauth_code_received)
 	OAuthServer.oauth_error.connect(func(r): login_failed.emit(r))
+	
+	# Handle Deep Linking for Mobile
+	if OS.has_signal("on_open_url"):
+		JavaScriptBridge.get_interface("window").addEventListener("hashchange", _on_open_url) # For web if needed
+		get_tree().get_root().connect("on_open_url", _on_open_url)
+	elif OS.has_feature("android") or OS.has_feature("ios"):
+		# Check for URL if already opened via deep link
+		var args = OS.get_cmdline_args()
+		for arg in args:
+			if arg.begins_with("concertopia://"):
+				_on_open_url(arg)
+
+func _on_open_url(url: String) -> void:
+	print("[AuthManager] Received Deep Link URL: ", url)
+	if not url.begins_with("concertopia://auth"):
+		return
+	
+	var query = url.split("?", true, 1)
+	if query.size() < 2:
+		return
+		
+	var params = OAuthServer._parse_query(query[1])
+	var code = params.get("code", "")
+	var state = params.get("state", "")
+	
+	if not code.is_empty():
+		_on_oauth_code_received(code, state)
 
 func _setup_http_nodes() -> void:
 	_auth_http = HTTPRequest.new()
@@ -241,32 +275,46 @@ func change_password(new_password: String, confirm_password: String = "") -> voi
 func _start_oauth(provider: String) -> void:
 	_oauth_provider = provider
 	_oauth_state    = "%08x" % [randi()]
-	if not OAuthServer.start(_oauth_state): return
+	
+	var redirect_uri = _get_redirect_uri()
+	
+	# Only start local server on PC
+	if redirect_uri.begins_with("http://localhost"):
+		if not OAuthServer.start(_oauth_state):
+			return
 	
 	var auth_url : String
 	if provider == "google":
-		auth_url = GOOGLE_AUTH_URL + "?client_id=" + GOOGLE_CLIENT_ID.uri_encode() + "&redirect_uri=" + GOOGLE_REDIRECT_URI.uri_encode() + "&response_type=code&scope=" + GOOGLE_SCOPES.uri_encode() + "&state=" + _oauth_state + "&access_type=offline&prompt=select_account"
+		auth_url = GOOGLE_AUTH_URL + "?client_id=" + GOOGLE_CLIENT_ID.uri_encode() + "&redirect_uri=" + redirect_uri.uri_encode() + "&response_type=code&scope=" + GOOGLE_SCOPES.uri_encode() + "&state=" + _oauth_state + "&access_type=offline&prompt=select_account"
 	else:
-		auth_url = FACEBOOK_AUTH_URL + "?client_id=" + FACEBOOK_APP_ID + "&redirect_uri=" + FACEBOOK_REDIRECT_URI.uri_encode() + "&response_type=code&scope=" + FACEBOOK_SCOPES.uri_encode() + "&state=" + _oauth_state
+		auth_url = FACEBOOK_AUTH_URL + "?client_id=" + FACEBOOK_APP_ID + "&redirect_uri=" + redirect_uri.uri_encode() + "&response_type=code&scope=" + FACEBOOK_SCOPES.uri_encode() + "&state=" + _oauth_state
 
 	OS.shell_open(auth_url)
 	oauth_login_started.emit(provider)
 
 func _on_oauth_code_received(code: String, _state: String) -> void:
 	var url : String; var body : String
+	var redirect_uri = _get_redirect_uri()
+	
 	if _oauth_provider == "google":
 		url = GOOGLE_TOKEN_URL
-		body = "code=" + code.uri_encode() + "&client_id=" + GOOGLE_CLIENT_ID + "&client_secret=" + GOOGLE_CLIENT_SECRET + "&redirect_uri=" + GOOGLE_REDIRECT_URI + "&grant_type=authorization_code"
+		body = "code=" + code.uri_encode() + "&client_id=" + GOOGLE_CLIENT_ID + "&client_secret=" + GOOGLE_CLIENT_SECRET + "&redirect_uri=" + redirect_uri + "&grant_type=authorization_code"
 	else:
 		url = FACEBOOK_TOKEN_URL
-		body = "code=" + code.uri_encode() + "&client_id=" + FACEBOOK_APP_ID + "&client_secret=" + FACEBOOK_APP_SECRET + "&redirect_uri=" + FACEBOOK_REDIRECT_URI + "&grant_type=authorization_code"
+		body = "code=" + code.uri_encode() + "&client_id=" + FACEBOOK_APP_ID + "&client_secret=" + FACEBOOK_APP_SECRET + "&redirect_uri=" + redirect_uri + "&grant_type=authorization_code"
 	
 	_oauth_http.request(url, ["Content-Type: application/x-www-form-urlencoded"], HTTPClient.METHOD_POST, body)
 
-func _on_oauth_completed(_result: int, status_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
-	var response = JSON.parse_string(body.get_string_from_utf8())
+func _on_oauth_completed(result: int, status_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
+	if result != HTTPRequest.RESULT_SUCCESS:
+		login_failed.emit("OAuth Network Error (Result: %d)" % result)
+		return
+		
+	var body_str = body.get_string_from_utf8()
+	var response = JSON.parse_string(body_str)
 	if response == null:
-		login_failed.emit("OAuth Token Exchange Failed: Invalid JSON response")
+		login_failed.emit("OAuth Token Exchange Failed: Invalid server response format (Code: %d)" % status_code)
+		print("[AuthManager] OAuth JSON Parse Error. Raw body: ", body_str)
 		return
 	if status_code >= 200 and status_code < 300 and response is Dictionary and response.has("access_token"):
 		var token = response.get("access_token", "")

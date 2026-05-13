@@ -418,10 +418,10 @@ func _build_chat_ui() -> void:
 	# 1. Floating Toggle Button
 	_chat_toggle_btn = Button.new()
 	_chat_toggle_btn.text = "💬 CHAT WITH ARTIST"
-	_chat_toggle_btn.anchor_left = 1.0; _chat_toggle_btn.anchor_top = 1.0
-	_chat_toggle_btn.anchor_right = 1.0; _chat_toggle_btn.anchor_bottom = 1.0
-	_chat_toggle_btn.offset_left = -220; _chat_toggle_btn.offset_top = -60
-	_chat_toggle_btn.offset_right = -30; _chat_toggle_btn.offset_bottom = -20
+	_chat_toggle_btn.anchor_left = 0.0; _chat_toggle_btn.anchor_top = 1.0
+	_chat_toggle_btn.anchor_right = 0.0; _chat_toggle_btn.anchor_bottom = 1.0
+	_chat_toggle_btn.offset_left = 30; _chat_toggle_btn.offset_top = -60
+	_chat_toggle_btn.offset_right = 220; _chat_toggle_btn.offset_bottom = -20
 	_chat_toggle_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	
 	var style := _flat(C_PANEL, 20)
@@ -438,10 +438,10 @@ func _build_chat_ui() -> void:
 	
 	# 2. Chat Panel
 	_chat_panel = PanelContainer.new()
-	_chat_panel.anchor_left = 1.0; _chat_panel.anchor_top = 1.0
-	_chat_panel.anchor_right = 1.0; _chat_panel.anchor_bottom = 1.0
-	_chat_panel.offset_left = -400; _chat_panel.offset_top = -500
-	_chat_panel.offset_right = -30; _chat_panel.offset_bottom = -70
+	_chat_panel.anchor_left = 0.0; _chat_panel.anchor_top = 1.0
+	_chat_panel.anchor_right = 0.0; _chat_panel.anchor_bottom = 1.0
+	_chat_panel.offset_left = 30; _chat_panel.offset_top = -500
+	_chat_panel.offset_right = 400; _chat_panel.offset_bottom = -70
 	_chat_panel.visible = false
 	
 	var p_style := _flat(C_PANEL_DARK, 15)
@@ -521,32 +521,96 @@ func _on_chat_submitted(text: String) -> void:
 	var artist = _room.get("artist", "ARTIST").replace("\n", " ")
 	var user_name = AuthManager.current_user.get("display_name", "Fan")
 	
-	var prompt = "You are %s, the famous music artist. A fan named %s is talking to you in a virtual concert room. Respond as %s in a brief, friendly, and authentic way. Be cool, use some emoji, and stay in character. The fan says: %s" % [artist, user_name, artist, text]
-	var url = "https://text.pollinations.ai/" + prompt.uri_encode()
+	var system_prompt = "You are %s, the famous music artist. A fan named %s is talking to you. Respond as %s in a brief, friendly, and authentic way. Be cool, use some emoji, and stay in character." % [artist, user_name, artist]
 	
+	var url = "https://text.pollinations.ai/" + text.uri_encode() + "?system=" + system_prompt.uri_encode() + "&model=openai-fast"
+	
+	_log_debug("CHAT REQUEST: " + url, "cyan")
 	_chat_log.text += "[color=#f56b9e][i]... %s is typing ...[/i][/color]\n" % artist
 	_chat_http.request(url)
 
-func _on_chat_request_completed(_res, code, _hdrs, body) -> void:
+func _on_chat_request_completed(result: int, code: int, _hdrs: PackedStringArray, body: PackedByteArray) -> void:
 	_chat_loading = false
+	
+	_log_debug("CHAT RESPONSE - Code: %d, Result: %d" % [code, result], "yellow" if code == 200 else "red")
+	if code != 200:
+		_log_debug("RAW BODY: " + body.get_string_from_utf8().left(200), "gray")
 	# Remove "typing" indicator (last line)
 	var lines = _chat_log.text.split("\n")
 	if lines.size() > 0:
 		lines.remove_at(lines.size() - 1)
 		_chat_log.text = "\n".join(lines)
 		
-	if code == 200:
+	if result == HTTPRequest.RESULT_SUCCESS and code == 200:
 		var response = body.get_string_from_utf8()
 		var artist = _room.get("artist", "ARTIST").replace("\n", " ")
 		_chat_log.text += "\n[b]%s:[/b] %s\n" % [artist, response]
 		AudioManager.play("hover")
+	elif code == 500:
+		_chat_log.text += "\n[color=red]System: Artist's server is full. Try again in a minute.[/color]\n"
 	else:
-		_chat_log.text += "\n[color=red]System: Artist is busy backstage. Try again later.[/color]\n"
+		_chat_log.text += "\n[color=red]System: Artist is busy backstage (Code: %d).[/color]\n" % code
 
 func _on_watch_in_theatre_pressed() -> void:
 	if not _cinema_active_id.is_empty():
 		OS.shell_open("https://www.youtube.com/watch?v=" + _cinema_active_id)
 		_hide_cinema()
+
+# ── Debug UI ──────────────────────────────────────────────────────────────────
+var _debug_overlay : CanvasLayer = null
+var _debug_log : RichTextLabel = null
+
+func _input(event: InputEvent) -> void:
+	# Toggle Debug Overlay with Shift + D
+	if event is InputEventKey and event.pressed:
+		if event.keycode == KEY_D and Input.is_key_pressed(KEY_SHIFT):
+			_toggle_debug()
+
+func _toggle_debug() -> void:
+	if _debug_overlay == null:
+		_build_debug_ui()
+	_debug_overlay.visible = !_debug_overlay.visible
+	print("[DEBUG] Overlay Toggled: ", _debug_overlay.visible)
+
+func _build_debug_ui() -> void:
+	_debug_overlay = CanvasLayer.new()
+	_debug_overlay.layer = 120
+	add_child(_debug_overlay)
+	
+	var panel = PanelContainer.new()
+	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	panel.modulate.a = 0.9
+	_debug_overlay.add_child(panel)
+	
+	var vbox = VBoxContainer.new()
+	panel.add_child(vbox)
+	
+	var header = HBoxContainer.new()
+	vbox.add_child(header)
+	
+	var title = Label.new()
+	title.text = "SYSTEM DEBUG CONSOLE"
+	header.add_child(title)
+	
+	var close_btn = Button.new()
+	close_btn.text = "CLOSE (SHIFT+D)"
+	close_btn.pressed.connect(func(): _debug_overlay.visible = false)
+	header.add_child(close_btn)
+	
+	_debug_log = RichTextLabel.new()
+	_debug_log.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_debug_log.bbcode_enabled = true
+	_debug_log.scroll_following = true
+	vbox.add_child(_debug_log)
+	
+	_debug_overlay.visible = false
+
+func _log_debug(msg: String, color: String = "white") -> void:
+	var timestamp = Time.get_time_string_from_system()
+	var formatted = "[color=%s][%s] %s[/color]\n" % [color, timestamp, msg]
+	if _debug_log:
+		_debug_log.text += formatted
+	print("[DEBUG] ", msg)
 
 # ── Lifecycle ──────────────────────────────────────────────────────────────────
 func _ready() -> void:
@@ -1047,11 +1111,15 @@ func _on_leave_pressed() -> void:
 
 # ── AI CONCERT HISTORY ────────────────────────────────────────────────────────
 var _ai_panel : PanelContainer = null
-var _ai_label : RichTextLabel = null
 var _ai_loading : Label = null
 var _ai_open : bool = false
-var _ai_full_text : String = ""
 var _ai_char_idx : int = 0
+
+# Separate storage for the two tabs
+var _history_text : String = ""
+var _tophits_text : String = ""
+var _history_label : RichTextLabel = null
+var _tophits_label : RichTextLabel = null
 
 var _ai_toggle_btn : Button = null
 
@@ -1076,6 +1144,7 @@ func _build_ai_ui() -> void:
 	add_child(_ai_panel)
 	
 	var margin := MarginContainer.new()
+	margin.name = "MarginContainer"
 	margin.add_theme_constant_override("margin_left", 20)
 	margin.add_theme_constant_override("margin_right", 20)
 	margin.add_theme_constant_override("margin_top", 20)
@@ -1083,10 +1152,12 @@ func _build_ai_ui() -> void:
 	_ai_panel.add_child(margin)
 	
 	var vbox := VBoxContainer.new()
+	vbox.name = "VBoxContainer"
 	vbox.add_theme_constant_override("separation", 12)
 	margin.add_child(vbox)
 	
 	var title := Label.new()
+	title.name = "Title"
 	title.text = "Artist Biography"
 	title.add_theme_color_override("font_color", C_GOLD_LIGHT)
 	title.add_theme_font_size_override("font_size", 16)
@@ -1115,16 +1186,32 @@ func _build_ai_ui() -> void:
 	scroll_margin.add_theme_constant_override("margin_right", 12)
 	scroll.add_child(scroll_margin)
 	
-	_ai_label = RichTextLabel.new()
-	_ai_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_ai_label.fit_content = true
-	_ai_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_ai_label.bbcode_enabled = true
-	_ai_label.add_theme_color_override("default_color", C_CREAM)
-	if _body_font: _ai_label.add_theme_font_override("normal_font", _body_font)
-	_ai_label.add_theme_font_size_override("normal_font_size", 12)
-	_ai_label.meta_clicked.connect(_on_ai_link_clicked)
-	scroll_margin.add_child(_ai_label)
+	# Container for labels to switch visibility
+	var labels_vbox := VBoxContainer.new()
+	scroll_margin.add_child(labels_vbox)
+
+	_history_label = RichTextLabel.new()
+	_history_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_history_label.fit_content = true
+	_history_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_history_label.bbcode_enabled = true
+	_history_label.add_theme_color_override("default_color", C_CREAM)
+	if _body_font: _history_label.add_theme_font_override("normal_font", _body_font)
+	_history_label.add_theme_font_size_override("normal_font_size", 12)
+	_history_label.meta_clicked.connect(_on_ai_link_clicked)
+	labels_vbox.add_child(_history_label)
+
+	_tophits_label = RichTextLabel.new()
+	_tophits_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_tophits_label.fit_content = true
+	_tophits_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_tophits_label.bbcode_enabled = true
+	_tophits_label.add_theme_color_override("default_color", C_CREAM)
+	if _body_font: _tophits_label.add_theme_font_override("normal_font", _body_font)
+	_tophits_label.add_theme_font_size_override("normal_font_size", 12)
+	_tophits_label.meta_clicked.connect(_on_ai_link_clicked)
+	_tophits_label.visible = false
+	labels_vbox.add_child(_tophits_label)
 	
 	# Spacer
 	var gap := Control.new()
@@ -1157,25 +1244,24 @@ func _build_ai_ui() -> void:
 	)
 	vbox.add_child(book_btn)
 	
-	# 2. The toggle button for AI History
+	# 2. The toggle buttons for AI Panels
+	var btns_vbox := VBoxContainer.new()
+	btns_vbox.anchor_left = 1.0; btns_vbox.anchor_top = 0.5
+	btns_vbox.anchor_right = 1.0; btns_vbox.anchor_bottom = 0.5
+	btns_vbox.offset_left = -160; btns_vbox.offset_top = -50
+	btns_vbox.offset_right = 0; btns_vbox.offset_bottom = 50
+	btns_vbox.add_theme_constant_override("separation", 10)
+	btns_vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(btns_vbox)
+	
 	_ai_toggle_btn = Button.new()
 	_ai_toggle_btn.text = "✦ ARTIST HISTORY"
-	_ai_toggle_btn.anchor_left = 1.0
-	_ai_toggle_btn.anchor_top = 0.5
-	_ai_toggle_btn.anchor_right = 1.0
-	_ai_toggle_btn.anchor_bottom = 0.5
-	_ai_toggle_btn.offset_left = -140
-	_ai_toggle_btn.offset_top = -20
-	_ai_toggle_btn.offset_right = 0
-	_ai_toggle_btn.offset_bottom = 20
+	_ai_toggle_btn.custom_minimum_size = Vector2(0, 45)
 	_ai_toggle_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	
 	var sn := _flat(C_PANEL, 8)
-	sn.border_width_left = 2
-	sn.border_width_top = 2
-	sn.border_width_bottom = 2
+	sn.border_width_left = 2; sn.border_width_top = 2; sn.border_width_bottom = 2
 	sn.border_color = acc
-	
 	var sh := _flat(acc, 8)
 	
 	_ai_toggle_btn.add_theme_stylebox_override("normal", sn)
@@ -1183,40 +1269,133 @@ func _build_ai_ui() -> void:
 	_ai_toggle_btn.add_theme_stylebox_override("pressed", sn)
 	_ai_toggle_btn.add_theme_color_override("font_color", C_CREAM)
 	if _pixel_font: _ai_toggle_btn.add_theme_font_override("font", _pixel_font)
-	
 	_ai_toggle_btn.pressed.connect(_on_ai_button_pressed)
-	add_child(_ai_toggle_btn)
+	btns_vbox.add_child(_ai_toggle_btn)
+
+	var top_hit_btn := Button.new()
+	top_hit_btn.text = "♫ TOP HIT SONG"
+	top_hit_btn.custom_minimum_size = Vector2(0, 45)
+	top_hit_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	top_hit_btn.add_theme_stylebox_override("normal", sn)
+	top_hit_btn.add_theme_stylebox_override("hover", sh)
+	top_hit_btn.add_theme_stylebox_override("pressed", sn)
+	top_hit_btn.add_theme_color_override("font_color", C_CREAM)
+	if _pixel_font: top_hit_btn.add_theme_font_override("font", _pixel_font)
+	top_hit_btn.pressed.connect(_on_top_hit_button_pressed)
+	btns_vbox.add_child(top_hit_btn)
+	
+	# Store VBox ref to animate it
+	_btns_vbox = btns_vbox
+
+var _btns_vbox : VBoxContainer = null
+var _ai_current_mode : String = "" # "history" or "tophits"
+
+func _on_top_hit_button_pressed() -> void:
+	if _ai_panel.visible and _ai_open and _ai_current_mode == "tophits":
+		_close_ai_panel()
+	else:
+		_ai_current_mode = "tophits"
+		_open_ai_panel("Top Hits & Stats")
 
 func _on_ai_button_pressed() -> void:
-	if _ai_panel.visible and _ai_open:
-		_ai_open = false
-		var tw := create_tween().set_parallel(true)
-		tw.tween_property(_ai_panel, "offset_left", 0, 0.3).set_trans(Tween.TRANS_SINE)
-		tw.tween_property(_ai_panel, "offset_right", 400, 0.3).set_trans(Tween.TRANS_SINE)
-		tw.tween_property(_ai_toggle_btn, "offset_left", -140, 0.3).set_trans(Tween.TRANS_SINE)
-		tw.tween_property(_ai_toggle_btn, "offset_right", 0, 0.3).set_trans(Tween.TRANS_SINE)
-		tw.chain().tween_callback(func(): _ai_panel.visible = false)
+	if _ai_panel.visible and _ai_open and _ai_current_mode == "history":
+		_close_ai_panel()
 	else:
-		_ai_panel.visible = true
-		_ai_open = true
-		var tw := create_tween().set_parallel(true)
-		tw.tween_property(_ai_panel, "offset_left", -400, 0.3).set_trans(Tween.TRANS_SINE)
-		tw.tween_property(_ai_panel, "offset_right", 0, 0.3).set_trans(Tween.TRANS_SINE)
-		tw.tween_property(_ai_toggle_btn, "offset_left", -540, 0.3).set_trans(Tween.TRANS_SINE)
-		tw.tween_property(_ai_toggle_btn, "offset_right", -400, 0.3).set_trans(Tween.TRANS_SINE)
-		_generate_ai_history()
+		_ai_current_mode = "history"
+		_open_ai_panel("Artist Biography")
+
+func _open_ai_panel(title_text: String) -> void:
+	_ai_panel.get_node("MarginContainer/VBoxContainer/Title").text = title_text
+	_ai_panel.visible = true
+	_ai_open = true
+	
+	# Switch label visibility
+	_history_label.visible = (_ai_current_mode == "history")
+	_tophits_label.visible = (_ai_current_mode == "tophits")
+	
+	var tw := create_tween().set_parallel(true)
+	tw.tween_property(_ai_panel, "offset_left", -400, 0.3).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(_ai_panel, "offset_right", 0, 0.3).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(_btns_vbox, "offset_left", -560, 0.3).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(_btns_vbox, "offset_right", -400, 0.3).set_trans(Tween.TRANS_SINE)
+	
+	if _ai_current_mode == "history":
+		if _history_text.is_empty():
+			_generate_ai_history()
+	else:
+		if _tophits_text.is_empty():
+			_generate_top_hit_info()
+
+func _close_ai_panel() -> void:
+	_ai_open = false
+	var tw := create_tween().set_parallel(true)
+	tw.tween_property(_ai_panel, "offset_left", 0, 0.3).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(_ai_panel, "offset_right", 400, 0.3).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(_btns_vbox, "offset_left", -160, 0.3).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(_btns_vbox, "offset_right", 0, 0.3).set_trans(Tween.TRANS_SINE)
+	tw.chain().tween_callback(func(): _ai_panel.visible = false)
+
+func _generate_top_hit_info() -> void:
+	if _ai_loading.visible:
+		return
+	
+	var artist : String = _room.get("artist", "ARTIST").replace("\n", " ")
+	_ai_loading.visible = true
+	_ai_loading.text = "Consulting the Archives..."
+	_tophits_label.text = ""
+	
+	# Prompt for AI-generated stats
+	var system_prompt = "You are a music statistics archivist. Provide the top 3 hits and monthly listener statistics for the requested artist in a concise, stylish 16-bit retro RPG style format. Include some fake but realistic 'Monthly Stats' like 'Mana/Listeners', 'Popularity/Level'. Use BBCode for styling."
+	var user_prompt = "Provide stats for %s." % artist
+
+	var url = "https://text.pollinations.ai/" + user_prompt.uri_encode() + "?system=" + system_prompt.uri_encode() + "&model=openai-fast"
+	
+	_log_debug("TOP HITS REQUEST: " + url, "cyan")
+	print("[ConcertRoom] Requesting Top Hits from: ", url)
+	
+	var http = HTTPRequest.new()
+	add_child(http)
+	http.timeout = 15.0
+	
+	http.request_completed.connect(func(result, code, _h, body_bytes):
+		_ai_loading.visible = false
+		
+		if result != HTTPRequest.RESULT_SUCCESS:
+			_tophits_label.text = "System: Network error. Check your connection."
+			http.queue_free()
+			return
+
+		if code == 200:
+			_tophits_text = "[center][b]✦ %s GLOBAL STATS ✦[/b][/center]\n\n" % artist.to_upper()
+			var content = body_bytes.get_string_from_utf8()
+			_tophits_text += content
+			var tw = create_tween()
+			tw.tween_method(func(chars):
+				_tophits_label.text = _tophits_text.substr(0, chars)
+			, 0, _tophits_text.length(), _tophits_text.length() * 0.010)
+		elif code == 500:
+			_tophits_label.text = "System: AI provider maintenance (Server Full). Please try again later."
+		else:
+			_tophits_label.text = "System: AI Service busy (Code: %d)." % code
+			
+		http.queue_free()
+	)
+	
+	var err = http.request(url)
+	if err != OK:
+		_ai_loading.visible = false
+		_tophits_label.text = "System: Failed to initiate request (Err: %d)" % err
+		http.queue_free()
 
 func _generate_ai_history() -> void:
-	if _ai_loading.visible or (_ai_char_idx > 0 and _ai_char_idx < _ai_full_text.length()):
+	if _ai_loading.visible:
 		return
 		
 	var artist : String = _room.get("artist", "ARTIST").replace("\n", " ")
 	var artist_key : String = _room.get("artist", "")
 	
 	_ai_loading.visible = true
-	_ai_label.text = ""
-	_ai_full_text = ""
-	_ai_char_idx = 0
+	_history_label.text = ""
 	
 	await get_tree().create_timer(1.0).timeout
 	
@@ -1239,14 +1418,12 @@ func _generate_ai_history() -> void:
 	mock_response += "[url=https://www.ticketmaster.com/search?q=%s]✦ Find %s Tickets on Ticketmaster[/url]\n" % [artist.replace(" ", "%20"), artist]
 	mock_response += "[url=https://www.bandsintown.com/a/%s]✦ View %s Tour Dates on Bandsintown[/url]" % [artist.replace(" ", "%20"), artist]
 	
-	_ai_full_text = mock_response
+	_history_text = mock_response
 	
 	var tw = create_tween()
-	tw.tween_method(_type_ai_text, 0, _ai_full_text.length(), _ai_full_text.length() * 0.010)
+	tw.tween_method(func(chars):
+		_history_label.text = _history_text.substr(0, chars)
+	, 0, _history_text.length(), _history_text.length() * 0.010)
 
-func _type_ai_text(chars: int) -> void:
-	_ai_char_idx = chars
-	_ai_label.text = _ai_full_text.substr(0, _ai_char_idx)
-	
 func _on_ai_link_clicked(meta: Variant) -> void:
 	OS.shell_open(str(meta))

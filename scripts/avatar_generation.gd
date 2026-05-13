@@ -259,19 +259,24 @@ func _on_generate_pressed() -> void:
 	AudioManager.play("generate")
 	UIUtils.add_shimmer(avatar_rect)
 	
-	var base_prompt = "A close-up headshot avatar featuring only the face of a character in strict, ultra-blocky 16-bit pixel art. The image must show highly aliased construction, built from large, visible, distinct square pixel blocks, with absolutely no smoothing or anti-aliasing. Character description: "
-	var style_prompt = ". Use hard cell-shading and a severely constrained retro color palette with sharp light and shadow blocks. Solid background."
+	var base_prompt = "A close-up headshot avatar featuring only the face of a character in strict, ultra-blocky 16-bit pixel art. Highly aliased, visible square pixel blocks, absolutely no smoothing. Character description: "
+	var style_prompt = ". Hard cell-shading, retro color palette, sharp light/shadow blocks, solid background."
 	var full_prompt = base_prompt + prompt + style_prompt
-	var url = "https://image.pollinations.ai/prompt/" + full_prompt.uri_encode() + "?width=512&height=512&nologo=true&model=flux&seed=" + str(randi())
+	var url = "https://gen.pollinations.ai/image/" + full_prompt.uri_encode() + "?width=512&height=512&nologo=true&enhance=true&seed=" + str(randi())
 	
+	print("[AvatarGen] Requesting avatar from: ", url)
 	AuthManager.current_user["avatar_url"] = url
 	http_request.request(url)
 
-func _on_request_completed(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray) -> void:
+func _on_request_completed(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
 	generate_btn.disabled = false
 	continue_btn.disabled = false
 	UIUtils.remove_shimmer(avatar_rect)
 	
+	if result != HTTPRequest.RESULT_SUCCESS:
+		_on_error("Network error (Result: %d)" % result)
+		return
+
 	if response_code >= 200 and response_code < 300:
 		var image = Image.new()
 		if image.load_jpg_from_buffer(body) == OK or image.load_png_from_buffer(body) == OK or image.load_webp_from_buffer(body) == OK:

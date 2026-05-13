@@ -433,24 +433,23 @@ func _on_export_pressed(source_path: String) -> void:
 		UIUtils.show_toast("Error: Source file missing.", Color(1, 0.4, 0.4))
 		return
 		
-	# On Android, we may need to request permissions for older versions,
-	# though Scoped Storage is the norm now.
-	if OS.get_name() == "Android":
-		OS.request_permissions()
-		
 	var filename = "Concertopia_%d.png" % Time.get_unix_time_from_system()
-	
-	# Attempt to find a valid system directory
-	var dest_dir = OS.get_system_dir(OS.SYSTEM_DIR_PICTURES)
-	if dest_dir.is_empty():
-		dest_dir = OS.get_system_dir(OS.SYSTEM_DIR_DCIM)
-	if dest_dir.is_empty():
-		dest_dir = OS.get_system_dir(OS.SYSTEM_DIR_DOWNLOADS)
-	if dest_dir.is_empty():
-		dest_dir = OS.get_user_data_dir()
-		
-	# Use path_join for cross-platform safety
-	var dest_path = dest_dir.path_join(filename)
+	var dest_path = ""
+
+	if OS.has_feature("android"):
+		# On Android 10+, we can't write to Pictures easily without a plugin.
+		# We'll save to the public Downloads folder as a fallback if possible,
+		# or keep it in user:// and notify the user.
+		dest_path = "/storage/emulated/0/Download/".path_join(filename)
+		# Note: This still might need MANAGE_EXTERNAL_STORAGE or a plugin for 10+
+		# For now, we attempt it but catch the error.
+	else:
+		var dest_dir = OS.get_system_dir(OS.SYSTEM_DIR_PICTURES)
+		if dest_dir.is_empty():
+			dest_dir = OS.get_system_dir(OS.SYSTEM_DIR_DOWNLOADS)
+		if dest_dir.is_empty():
+			dest_dir = OS.get_user_data_dir()
+		dest_path = dest_dir.path_join(filename)
 	
 	var img = Image.load_from_file(source_path)
 	if img:
@@ -461,8 +460,9 @@ func _on_export_pressed(source_path: String) -> void:
 			print("[VAULT] Exported to: ", dest_path)
 		else:
 			print("[VAULT] Export failed. Error code: ", err)
-			if err == ERR_FILE_CANT_WRITE:
-				UIUtils.show_toast("Permission Denied", Color(1, 0.4, 0.4))
+			# Fallback for Android Scoped Storage
+			if OS.has_feature("android"):
+				UIUtils.show_toast("Export restricted by Android. Image is in Vault.", Color(1, 0.6, 0.2))
 			else:
 				UIUtils.show_toast("Export failed.", Color(1, 0.4, 0.4))
 	else:

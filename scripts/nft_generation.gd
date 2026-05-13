@@ -307,16 +307,21 @@ func _on_generate_pressed() -> void:
 
 	var style_prompt = ". Vibrant colors, crisp pixel edges, nostalgic aesthetic, flat background."
 	var full_prompt = base_prompt + prompt + style_prompt
-	var safe_prompt = full_prompt.uri_encode()
-	var url = "https://image.pollinations.ai/prompt/" + safe_prompt + "?width=1024&height=1024&nologo=true&model=flux&seed=" + str(randi())
+	var url = "https://gen.pollinations.ai/image/" + full_prompt.uri_encode() + "?width=1024&height=1024&nologo=true&enhance=true&seed=" + str(randi())
+	
+	print("[NFTGen] Requesting NFT art from: ", url)
 	_last_generated_url = url
 	http_request.request(url)
 
-func _on_request_completed(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray) -> void:
+func _on_request_completed(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
 	generate_btn.disabled = false
 	back_btn.disabled = false
 	UIUtils.remove_shimmer(nft_rect)
 	
+	if result != HTTPRequest.RESULT_SUCCESS:
+		_on_error("Network error (Result: %d)" % result)
+		return
+
 	if response_code >= 200 and response_code < 300:
 		var image = Image.new()
 		if image.load_jpg_from_buffer(body) == OK or image.load_png_from_buffer(body) == OK or image.load_webp_from_buffer(body) == OK:
