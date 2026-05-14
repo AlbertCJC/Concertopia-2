@@ -8,6 +8,10 @@ apk-release/
 # Export presets (contains signing keys)
 export_presets.cfg
 
+# Secrets Configuration
+secrets.cfg
+secrets.env
+
 # Android auto-generated build output
 android/
 

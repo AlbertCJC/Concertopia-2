@@ -25,7 +25,7 @@ func _ready() -> void:
 	add_child(tex_rect)
 	
 	# 2. Setup Request
-	var test_url = "https://image.pollinations.ai/prompt/A%20dog%20singing%20on%20stage.?width=1024&height=1024&nologo=true&seed=1491789620"
+	var test_url = "https://image.pollinations.ai/prompt/A%20dog%20singing%20on%20stage.?width=1024&height=1024&seed=1491789620"
 	print("[DIAGNOSTIC] Attempting to fetch: ", test_url)
 	
 	var http = HTTPRequest.new()

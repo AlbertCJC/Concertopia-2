@@ -2,11 +2,10 @@ extends VBoxContainer
 
 # ── Node refs ──────────────────────────────────────────────────────────────────
 @onready var email_field    : LineEdit    = $Email
-@onready var password_field : LineEdit    = $Passwowrd
+@onready var password_field : LineEdit    = $Password
 @onready var login_button   : Button      = $"Log In2"
 @onready var signup_label   : Label       = $Label
 @onready var google_icon    : TextureRect = $HBoxContainer/google
-@onready var facebook_icon  : TextureRect = $HBoxContainer/facebook
 
 var error_label  : Label = null
 var forgot_label : Label = null
@@ -23,7 +22,6 @@ const EYE_CLOSED : String = "res://icons/eye-closed.png"
 
 # ── Provider colours for spinner label ────────────────────────────────────────
 const COLOR_GOOGLE   : Color = Color(0.26, 0.52, 0.96)
-const COLOR_FACEBOOK : Color = Color(0.23, 0.35, 0.60)
 
 # ── Test Credentials ───────────────────────────────────────────────────────────
 const TEST_EMAIL    : String = "test@concertopia.com"
@@ -38,6 +36,10 @@ func _ready() -> void:
 	email_field.placeholder_text    = "Email"
 	password_field.right_icon       = null
 	
+	# Mobile Optimization: Set keyboard types
+	email_field.virtual_keyboard_type = LineEdit.KEYBOARD_TYPE_EMAIL_ADDRESS
+	password_field.virtual_keyboard_type = LineEdit.KEYBOARD_TYPE_PASSWORD
+
 	email_field.add_theme_color_override("caret_color", Color(0.1, 0.1, 0.1, 1))
 	password_field.add_theme_color_override("caret_color", Color(0.1, 0.1, 0.1, 1))
 
@@ -78,7 +80,6 @@ func _input(event: InputEvent) -> void:
 # ══════════════════════════════════════════════════════════════════════════════
 func _setup_oauth_icons() -> void:
 	_make_icon_clickable(google_icon,   _on_google_pressed)
-	_make_icon_clickable(facebook_icon, _on_facebook_pressed)
 
 func _make_icon_clickable(icon: TextureRect, callback: Callable) -> void:
 	if icon == null:
@@ -95,10 +96,6 @@ func _make_icon_clickable(icon: TextureRect, callback: Callable) -> void:
 func _on_google_pressed() -> void:
 	_show_error("")
 	AuthManager.login_with_google()
-
-func _on_facebook_pressed() -> void:
-	_show_error("")
-	AuthManager.login_with_facebook()
 
 # Called when AuthManager opens the browser
 func _on_oauth_started(provider: String) -> void:
@@ -265,7 +262,5 @@ func _show_info(message: String) -> void:
 func _set_icons_enabled(enabled: bool) -> void:
 	var alpha : float = 1.0 if enabled else 0.45
 	if google_icon   != null: google_icon.modulate.a   = alpha
-	if facebook_icon != null: facebook_icon.modulate.a = alpha
 	# Prevent click spam while waiting
 	if google_icon   != null: google_icon.mouse_filter   = Control.MOUSE_FILTER_STOP if enabled else Control.MOUSE_FILTER_IGNORE
-	if facebook_icon != null: facebook_icon.mouse_filter = Control.MOUSE_FILTER_STOP if enabled else Control.MOUSE_FILTER_IGNORE

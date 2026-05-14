@@ -262,7 +262,7 @@ func _on_generate_pressed() -> void:
 	var base_prompt = "A close-up headshot avatar featuring only the face of a character in strict, ultra-blocky 16-bit pixel art. Highly aliased, visible square pixel blocks, absolutely no smoothing. Character description: "
 	var style_prompt = ". Hard cell-shading, retro color palette, sharp light/shadow blocks, solid background."
 	var full_prompt = base_prompt + prompt + style_prompt
-	var url = "https://gen.pollinations.ai/image/" + full_prompt.uri_encode() + "?width=512&height=512&nologo=true&enhance=true&seed=" + str(randi())
+	var url = "https://image.pollinations.ai/prompt/" + full_prompt.uri_encode() + "?width=512&height=512&enhance=true&seed=" + str(randi())
 	
 	print("[AvatarGen] Requesting avatar from: ", url)
 	AuthManager.current_user["avatar_url"] = url

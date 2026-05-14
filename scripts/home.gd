@@ -326,18 +326,19 @@ func _on_daily_login_pressed() -> void:
 func _setup_music() -> void:
 	_bg_music = AudioStreamPlayer.new()
 	add_child(_bg_music)
-	_bg_music.bus = "Music" # Optional: ensure you have a "Music" bus in your audio bus layout
+	_bg_music.bus = "Music" 
 	
 	# Attempt to load a default track
 	var track_path := "res://audio/home_music.mp3"
-	if FileAccess.file_exists(track_path):
-		var stream = load(track_path)
-		if stream:
-			_bg_music.stream = stream
-			_bg_music.play()
-			print("[Home] Background music started.")
+	# In exported builds, FileAccess.file_exists() might fail for remapped resources.
+	# load() is the safer way to check for existence in PCK.
+	var stream = load(track_path)
+	if stream:
+		_bg_music.stream = stream
+		_bg_music.play()
+		print("[Home] Background music started.")
 	else:
-		print("[Home] Background music file not found at: ", track_path)
+		print("[Home] Background music file could not be loaded: ", track_path)
 
 func _process(delta: float) -> void:
 	# Pulse live dots

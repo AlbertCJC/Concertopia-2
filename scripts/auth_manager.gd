@@ -20,19 +20,12 @@ const SAVE_PATH := "user://session.json"
 # ══════════════════════════════════════════════════════════════════════════════
 # OAuth 2.0 Configuration
 # ══════════════════════════════════════════════════════════════════════════════
-const GOOGLE_CLIENT_ID     : String = "158219607556-m8pcp6soiia4p61p72ntuf4amuf2lrqi.apps.googleusercontent.com"
-const GOOGLE_CLIENT_SECRET : String = "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"
+var GOOGLE_CLIENT_ID     : String = Env.get_secret("google", "client_id")
+var GOOGLE_CLIENT_SECRET : String = Env.get_secret("google", "client_secret")
 const GOOGLE_AUTH_URL      : String = "https://accounts.google.com/o/oauth2/v2/auth"
 const GOOGLE_TOKEN_URL     : String = "https://oauth2.googleapis.com/token"
 const GOOGLE_USERINFO_URL  : String = "https://www.googleapis.com/oauth2/v3/userinfo"
 const GOOGLE_SCOPES        : String = "openid email profile"
-
-const FACEBOOK_APP_ID      : String = "YOUR_FACEBOOK_APP_ID"
-const FACEBOOK_APP_SECRET  : String = "YOUR_FACEBOOK_APP_SECRET"
-const FACEBOOK_AUTH_URL    : String = "https://www.facebook.com/v19.0/dialog/oauth"
-const FACEBOOK_TOKEN_URL   : String = "https://graph.facebook.com/v19.0/oauth/access_token"
-const FACEBOOK_USERINFO_URL: String = "https://graph.facebook.com/me?fields=id,name,email,picture"
-const FACEBOOK_SCOPES      : String = "email,public_profile"
 
 # Redirect URIs: Standard localhost for PC, custom scheme for Mobile
 const REDIRECT_URI_PC      : String = "http://localhost:7123/"
@@ -93,23 +86,23 @@ func _ready() -> void:
 	_setup_refresh_timer()
 	_load_session()
 	
-	# If we restored a session, refresh the profile data from DB
-	if !access_token.is_empty() and Time.get_unix_time_from_system() < expires_at:
-		fetch_profile()
+	# Handle Deep Linking for Mobile & Web
+	if OS.has_feature("web"):
+		JavaScriptBridge.get_interface("window").addEventListener("hashchange", _on_open_url)
 	
-	OAuthServer.oauth_code_received.connect(_on_oauth_code_received)
-	OAuthServer.oauth_error.connect(func(r): login_failed.emit(r))
-	
-	# Handle Deep Linking for Mobile
-	if OS.has_signal("on_open_url"):
-		JavaScriptBridge.get_interface("window").addEventListener("hashchange", _on_open_url) # For web if needed
-		get_tree().get_root().connect("on_open_url", _on_open_url)
-	elif OS.has_feature("android") or OS.has_feature("ios"):
-		# Check for URL if already opened via deep link
+	if OS.has_feature("android") or OS.has_feature("ios"):
+		# In Godot 4, the 'on_open_url' signal is on the root window
+		if get_tree().get_root().has_signal("on_open_url"):
+			get_tree().get_root().connect("on_open_url", _on_open_url)
+		
+		# Check for URL if already opened via deep link (command line args)
 		var args = OS.get_cmdline_args()
 		for arg in args:
 			if arg.begins_with("concertopia://"):
 				_on_open_url(arg)
+	
+	OAuthServer.oauth_code_received.connect(_on_oauth_code_received)
+	OAuthServer.oauth_error.connect(func(r): login_failed.emit(r))
 
 func _on_open_url(url: String) -> void:
 	print("[AuthManager] Received Deep Link URL: ", url)
@@ -175,7 +168,6 @@ func login(email: String, password: String) -> void:
 	_send_request(_auth_http, SUPABASE_URL + ENDPOINT_LOGIN, _get_headers(), HTTPClient.METHOD_POST, body)
 
 func login_with_google() -> void: _start_oauth("google")
-func login_with_facebook() -> void: _start_oauth("facebook")
 
 func logout() -> void:
 	_clear_session()
@@ -284,10 +276,7 @@ func _start_oauth(provider: String) -> void:
 			return
 	
 	var auth_url : String
-	if provider == "google":
-		auth_url = GOOGLE_AUTH_URL + "?client_id=" + GOOGLE_CLIENT_ID.uri_encode() + "&redirect_uri=" + redirect_uri.uri_encode() + "&response_type=code&scope=" + GOOGLE_SCOPES.uri_encode() + "&state=" + _oauth_state + "&access_type=offline&prompt=select_account"
-	else:
-		auth_url = FACEBOOK_AUTH_URL + "?client_id=" + FACEBOOK_APP_ID + "&redirect_uri=" + redirect_uri.uri_encode() + "&response_type=code&scope=" + FACEBOOK_SCOPES.uri_encode() + "&state=" + _oauth_state
+	auth_url = GOOGLE_AUTH_URL + "?client_id=" + GOOGLE_CLIENT_ID.uri_encode() + "&redirect_uri=" + redirect_uri.uri_encode() + "&response_type=code&scope=" + GOOGLE_SCOPES.uri_encode() + "&state=" + _oauth_state + "&access_type=offline&prompt=select_account"
 
 	OS.shell_open(auth_url)
 	oauth_login_started.emit(provider)
@@ -296,12 +285,8 @@ func _on_oauth_code_received(code: String, _state: String) -> void:
 	var url : String; var body : String
 	var redirect_uri = _get_redirect_uri()
 	
-	if _oauth_provider == "google":
-		url = GOOGLE_TOKEN_URL
-		body = "code=" + code.uri_encode() + "&client_id=" + GOOGLE_CLIENT_ID + "&client_secret=" + GOOGLE_CLIENT_SECRET + "&redirect_uri=" + redirect_uri + "&grant_type=authorization_code"
-	else:
-		url = FACEBOOK_TOKEN_URL
-		body = "code=" + code.uri_encode() + "&client_id=" + FACEBOOK_APP_ID + "&client_secret=" + FACEBOOK_APP_SECRET + "&redirect_uri=" + redirect_uri + "&grant_type=authorization_code"
+	url = GOOGLE_TOKEN_URL
+	body = "code=" + code.uri_encode() + "&client_id=" + GOOGLE_CLIENT_ID + "&client_secret=" + GOOGLE_CLIENT_SECRET + "&redirect_uri=" + redirect_uri + "&grant_type=authorization_code"
 	
 	_oauth_http.request(url, ["Content-Type: application/x-www-form-urlencoded"], HTTPClient.METHOD_POST, body)
 
@@ -323,7 +308,7 @@ func _on_oauth_completed(result: int, status_code: int, _headers: PackedStringAr
 		login_failed.emit("OAuth Token Exchange Failed: " + _extract_error(response))
 
 func _fetch_oauth_user_info(token: String) -> void:
-	var url = GOOGLE_USERINFO_URL if _oauth_provider == "google" else FACEBOOK_USERINFO_URL
+	var url = GOOGLE_USERINFO_URL
 	var headers = ["Authorization: Bearer " + token]
 	_oauth_http.request(url, headers, HTTPClient.METHOD_GET)
 	_oauth_http.request_completed.disconnect(_on_oauth_completed)

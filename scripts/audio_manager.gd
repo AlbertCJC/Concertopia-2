@@ -33,11 +33,14 @@ func _ready() -> void:
 func _load_sounds() -> void:
 	for key in _sounds:
 		var path = _sounds[key]
-		if FileAccess.file_exists(path):
-			_loaded_streams[key] = load(path)
+		# In exported builds, .wav files are remapped to .wav.import or internal formats.
+		# load() handles this automatically, but FileAccess.file_exists() might fail on the original path.
+		var stream = load(path)
+		if stream:
+			_loaded_streams[key] = stream
 		else:
 			# Soft warning, won't crash
-			print("[AudioManager] Sound file missing: ", path)
+			print("[AudioManager] Failed to load sound: ", path)
 
 ## ── Settings Management ──
 

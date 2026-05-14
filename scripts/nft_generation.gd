@@ -4,9 +4,9 @@ const HOME_SCENE : String = "res://screens/home.tscn"
 
 # ── Crossmint NFT Configuration ──
 const CROSSMINT_BASE_URL     : String = "https://staging.crossmint.com"
-const CROSSMINT_PROJECT_ID   : String = "ck_staging_9yiAym64NJTiNgUmtGmDDsfc8b3pExdhyhFUtPqytLZN9ER83c5kPtpGbR7FJdT1TNCxRN5SVrFK6NNKKmKJcH4sDMy7tFpdHzN55yTfnz6vuW2w9gMsKYY7zZWgo31iueLFjBhQWPVVjJ4gdXknzntdJA5GqTkTyibJhnnzp9dPBqwHbzTwneGAPioEA2TYzsS9eQ6XsWCynUakLQCVBCZo"
-const CROSSMINT_CLIENT_SECRET: String = "sk_staging_32yTH2qGiXh38BJczqRyEnv9sCnx7LQGdQcuY8Sbe1MUSt578PT8EcZnm7g5vSgJ4Tg1uSsmPajLPQUxvPZTVvw9gsAYvZojsMZMGE9qiQLdsHZ5Pwa7wxbkcN75MSv7QwkSg578WgiXtEPSjSo6dm9QHdQpfAxpe7LS78NCMgnMhiRFwvajTJsuJqBwM6HJUJHeGHooyWBCNFQs3EwPgwz"
-const CROSSMINT_COLLECTION_ID: String = "99c73553-160c-4b65-b288-e294d173336b"
+var CROSSMINT_PROJECT_ID   : String = Env.get_secret("crossmint", "project_id")
+var CROSSMINT_CLIENT_SECRET: String = Env.get_secret("crossmint", "client_secret")
+var CROSSMINT_COLLECTION_ID: String = Env.get_secret("crossmint", "collection_id")
 
 # ── Colors ─────────────────────────────────────────────────────────────────────
 const C_BG      : Color = Color(0.04, 0.03, 0.10)
@@ -307,7 +307,7 @@ func _on_generate_pressed() -> void:
 
 	var style_prompt = ". Vibrant colors, crisp pixel edges, nostalgic aesthetic, flat background."
 	var full_prompt = base_prompt + prompt + style_prompt
-	var url = "https://gen.pollinations.ai/image/" + full_prompt.uri_encode() + "?width=1024&height=1024&nologo=true&enhance=true&seed=" + str(randi())
+	var url = "https://image.pollinations.ai/prompt/" + full_prompt.uri_encode() + "?width=1024&height=1024&enhance=true&seed=" + str(randi())
 	
 	print("[NFTGen] Requesting NFT art from: ", url)
 	_last_generated_url = url

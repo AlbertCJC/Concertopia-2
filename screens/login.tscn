@@ -9,7 +9,6 @@
 [ext_resource type="FontFile" uid="uid://cqmtiniotsuqq" path="res://font/Montserrat/static/Montserrat-Bold.ttf" id="6_t4830"]
 [ext_resource type="Texture2D" uid="uid://dya60t1wx5nt0" path="res://icons/google.png" id="7_0hcjn"]
 [ext_resource type="Texture2D" uid="uid://dcwl2mw6m5kjf" path="res://icons/apple-logo (1).png" id="8_hcu52"]
-[ext_resource type="Texture2D" uid="uid://y7awvfpfwmhy" path="res://icons/facebook.png" id="9_hsolr"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_itgl0"]
 content_margin_left = 50.0
@@ -104,7 +103,7 @@ texture = ExtResource("4_cgxio")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Passwowrd" type="LineEdit" parent="CenterContainer/VBoxContainer" unique_id=683891945]
+[node name="Password" type="LineEdit" parent="CenterContainer/VBoxContainer" unique_id=683891945]
 custom_minimum_size = Vector2(300, 50)
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
@@ -115,7 +114,7 @@ placeholder_text = "Password"
 right_icon = SubResource("CompressedTexture2D_tc5jd")
 icon_expand_mode = 1
 
-[node name="TextureRect" type="TextureRect" parent="CenterContainer/VBoxContainer/Passwowrd" unique_id=1803314476]
+[node name="TextureRect" type="TextureRect" parent="CenterContainer/VBoxContainer/Password" unique_id=1803314476]
 layout_mode = 0
 offset_left = 14.0
 offset_top = 10.0
@@ -149,11 +148,6 @@ alignment = 1
 [node name="google" type="TextureRect" parent="CenterContainer/VBoxContainer/HBoxContainer" unique_id=1355760725]
 layout_mode = 2
 texture = ExtResource("7_0hcjn")
-expand_mode = 3
-
-[node name="facebook" type="TextureRect" parent="CenterContainer/VBoxContainer/HBoxContainer" unique_id=2133851674]
-layout_mode = 2
-texture = ExtResource("9_hsolr")
 expand_mode = 3
 
 [node name="Label" type="Label" parent="CenterContainer/VBoxContainer" unique_id=338709710]

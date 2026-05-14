@@ -521,13 +521,27 @@ func _on_chat_submitted(text: String) -> void:
 	var artist = _room.get("artist", "ARTIST").replace("\n", " ")
 	var user_name = AuthManager.current_user.get("display_name", "Fan")
 	
-	var system_prompt = "You are %s, the famous music artist. A fan named %s is talking to you. Respond as %s in a brief, friendly, and authentic way. Be cool, use some emoji, and stay in character." % [artist, user_name, artist]
+	var system_prompt = "You are %s, the famous music artist. A fan named %s is talking to you. Respond as %s in a brief, friendly, and authentic way. Be cool, use some emoji, and stay in character. DO NOT use [*] or [size] tags in your response." % [artist, user_name, artist]
 	
 	var url = "https://text.pollinations.ai/" + text.uri_encode() + "?system=" + system_prompt.uri_encode() + "&model=openai-fast"
 	
 	_log_debug("CHAT REQUEST: " + url, "cyan")
 	_chat_log.text += "[color=#f56b9e][i]... %s is typing ...[/i][/color]\n" % artist
 	_chat_http.request(url)
+
+func _sanitize_bbcode(text: String) -> String:
+	# Godot RichTextLabel does not support standard [*] list tags
+	var sanitized = text.replace("[*]", "• ")
+	
+	# Godot uses [font_size=X], not [size=X]
+	var regex = RegEx.new()
+	regex.compile("\\[size=.*?\\]")
+	sanitized = regex.sub(sanitized, "", true)
+	
+	regex.compile("\\[/size\\]")
+	sanitized = regex.sub(sanitized, "", true)
+	
+	return sanitized
 
 func _on_chat_request_completed(result: int, code: int, _hdrs: PackedStringArray, body: PackedByteArray) -> void:
 	_chat_loading = false
@@ -1341,12 +1355,12 @@ func _generate_top_hit_info() -> void:
 	
 	var artist : String = _room.get("artist", "ARTIST").replace("\n", " ")
 	_ai_loading.visible = true
-	_ai_loading.text = "Consulting the Archives..."
+	_ai_loading.text = "Waiting for %s to reply..." % artist
 	_tophits_label.text = ""
 	
 	# Prompt for AI-generated stats
-	var system_prompt = "You are a music statistics archivist. Provide the top 3 hits and monthly listener statistics for the requested artist in a concise, stylish 16-bit retro RPG style format. Include some fake but realistic 'Monthly Stats' like 'Mana/Listeners', 'Popularity/Level'. Use BBCode for styling."
-	var user_prompt = "Provide stats for %s." % artist
+	var system_prompt = "You are %s, the famous music artist. Provide your top 3 hits and some fun monthly listener statistics in a brief, friendly, and authentic way. Be cool, use some emoji, and stay in character. Format it clearly using BBCode (like [b] for bold) so it reads like a personalized retro RPG stats screen. DO NOT use [*] or [size] tags, just use standard numbers or bullets for lists and basic tags like [b], [i], and [color]." % artist
+	var user_prompt = "Can you share your top hits and current stats with me?"
 
 	var url = "https://text.pollinations.ai/" + user_prompt.uri_encode() + "?system=" + system_prompt.uri_encode() + "&model=openai-fast"
 	
@@ -1368,11 +1382,12 @@ func _generate_top_hit_info() -> void:
 		if code == 200:
 			_tophits_text = "[center][b]✦ %s GLOBAL STATS ✦[/b][/center]\n\n" % artist.to_upper()
 			var content = body_bytes.get_string_from_utf8()
+			content = _sanitize_bbcode(content)
 			_tophits_text += content
+			_tophits_label.text = _tophits_text
+			_tophits_label.visible_ratio = 0.0
 			var tw = create_tween()
-			tw.tween_method(func(chars):
-				_tophits_label.text = _tophits_text.substr(0, chars)
-			, 0, _tophits_text.length(), _tophits_text.length() * 0.010)
+			tw.tween_property(_tophits_label, "visible_ratio", 1.0, _tophits_text.length() * 0.010)
 		elif code == 500:
 			_tophits_label.text = "System: AI provider maintenance (Server Full). Please try again later."
 		else:
@@ -1420,10 +1435,11 @@ func _generate_ai_history() -> void:
 	
 	_history_text = mock_response
 	
+	_history_label.text = _history_text
+	_history_label.visible_ratio = 0.0
 	var tw = create_tween()
-	tw.tween_method(func(chars):
-		_history_label.text = _history_text.substr(0, chars)
-	, 0, _history_text.length(), _history_text.length() * 0.010)
+	tw.tween_property(_history_label, "visible_ratio", 1.0, _history_text.length() * 0.010)
 
 func _on_ai_link_clicked(meta: Variant) -> void:
 	OS.shell_open(str(meta))
+
