@@ -167,7 +167,7 @@ func _build_ui() -> void:
 	mode_hbox.add_child(poster_toggle)
 	
 	var mode_info := Label.new()
-	mode_info.text = "(Adds Artist & Your Name to Art)"
+	mode_info.text = "(Turn it into a poster style)"
 	mode_info.add_theme_color_override("font_color", C_MUTED)
 	mode_info.add_theme_font_size_override("font_size", 10)
 	if body_font: mode_info.add_theme_font_override("font", body_font)
