@@ -324,4 +324,10 @@ func _on_error(msg: String) -> void:
 	status_label.add_theme_color_override("font_color", Color(1, 0.4, 0.4))
 
 func _on_continue_pressed() -> void:
-	get_tree().change_scene_to_file.call_deferred(NEXT_SCENE)
+	# Logic: If this was a "post-login intro" flow (New User or Welcome Back), 
+	# continue the onboarding. Otherwise, go straight to Home.
+	if AuthManager.post_login_intro:
+		AuthManager.post_login_intro = false # Reset the flag
+		get_tree().change_scene_to_file.call_deferred(NEXT_SCENE)
+	else:
+		get_tree().change_scene_to_file.call_deferred("res://screens/home.tscn")

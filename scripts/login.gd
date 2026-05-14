@@ -141,13 +141,17 @@ func _on_login_success(_user: Dictionary) -> void:
 		get_tree().change_scene_to_file.call_deferred("res://screens/inputcode.tscn")
 		return
 		
-	AuthManager.post_login_intro = true
-	if AuthManager.is_new_user or AuthManager.needs_profile_completion():
-		get_tree().change_scene_to_file.call_deferred(USER_DETAILS_SCENE)
-	elif AuthManager.needs_avatar_generation():
-		get_tree().change_scene_to_file.call_deferred("res://screens/avatar_generation.tscn")
+	# Flow Control: Only show Intro/Welcome screens if user is actually new
+	# or hasn't finished setup. Existing users go straight to welcome_back or home.
+	if AuthManager.is_new_user or AuthManager.needs_profile_completion() or AuthManager.needs_avatar_generation():
+		AuthManager.post_login_intro = true
+		if AuthManager.is_new_user or AuthManager.needs_profile_completion():
+			get_tree().change_scene_to_file.call_deferred(USER_DETAILS_SCENE)
+		else:
+			get_tree().change_scene_to_file.call_deferred("res://screens/avatar_generation.tscn")
 	else:
-		# Existing user, show welcome back
+		# Fully setup existing user
+		AuthManager.post_login_intro = false
 		get_tree().change_scene_to_file.call_deferred("res://screens/welcome_back.tscn")
 
 func _on_signup_success(_user: Dictionary) -> void:

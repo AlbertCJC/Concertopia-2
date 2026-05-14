@@ -2,8 +2,8 @@
 extends Node
 
 # ── Supabase Configuration ────────────────────────────────────────────────────
-const SUPABASE_URL := "https://jkhclleriwdsrojzsekx.supabase.co"
-const SUPABASE_KEY := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpraGNsbGVyaXdkc3JvanpzZWt4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3ODYzNzQsImV4cCI6MjA5MzM2MjM3NH0.N4tQ6kgm-X7ThJoWYzpXI2EXRKVnwSlcVd7X1OFLJ30"
+var SUPABASE_URL : String = Env.get_secret("supabase", "url", "https://jkhclleriwdsrojzsekx.supabase.co")
+var SUPABASE_KEY : String = Env.get_secret("supabase", "key", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpraGNsbGVyaXdkc3JvanpzZWt4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3ODYzNzQsImV4cCI6MjA5MzM2MjM3NH0.N4tQ6kgm-X7ThJoWYzpXI2EXRKVnwSlcVd7X1OFLJ30")
 
 # Endpoints
 const ENDPOINT_SIGNUP  := "/auth/v1/signup"
@@ -109,16 +109,26 @@ func _on_open_url(url: String) -> void:
 	if not url.begins_with("concertopia://auth"):
 		return
 	
-	var query = url.split("?", true, 1)
+	# Supabase redirects often use URL fragments (#access_token=...) 
+	# instead of query parameters (?code=...) for security.
+	var clean_url = url.replace("#", "?")
+	var query = clean_url.split("?", true, 1)
 	if query.size() < 2:
 		return
 		
 	var params = OAuthServer._parse_query(query[1])
+	
+	# Flow A: Authorization Code (Standard PC/Direct Flow)
 	var code = params.get("code", "")
 	var state = params.get("state", "")
-	
 	if not code.is_empty():
 		_on_oauth_code_received(code, state)
+		return
+
+	# Flow B: Direct Token (Supabase Mediated Flow for Mobile)
+	if params.has("access_token"):
+		print("[AuthManager] Received direct session from Supabase deep link.")
+		_handle_auth_success(params)
 
 func _setup_http_nodes() -> void:
 	_auth_http = HTTPRequest.new()
@@ -265,29 +275,62 @@ func change_password(new_password: String, confirm_password: String = "") -> voi
 # OAuth Internal
 # ══════════════════════════════════════════════════════════════════════════════
 func _start_oauth(provider: String) -> void:
+	is_new_user      = false
 	_oauth_provider = provider
 	_oauth_state    = "%08x" % [randi()]
 	
 	var redirect_uri = _get_redirect_uri()
+	print("[AuthManager] Starting OAuth flow for: ", provider)
+	print("[AuthManager] Redirect URI: ", redirect_uri)
 	
-	# Only start local server on PC
+	# Mobile/Export Strategy: 
+	# Google blocks direct OAuth requests to custom schemes (concertopia://) from Web Clients.
+	# The solution is to use Supabase as a proxy. We call Supabase, Supabase calls Google via HTTPS,
+	# and then Supabase redirects back to our app scheme.
+	
+	if OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios"):
+		var supabase_oauth_url = SUPABASE_URL + "/auth/v1/authorize?provider=" + provider + "&redirect_to=" + redirect_uri.uri_encode()
+		print("[AuthManager] Mobile: Using Supabase-mediated OAuth. URL: ", supabase_oauth_url)
+		OS.shell_open(supabase_oauth_url)
+		oauth_login_started.emit(provider)
+		return
+
+	# Only start local server on PC (localhost flow)
 	if redirect_uri.begins_with("http://localhost"):
 		if not OAuthServer.start(_oauth_state):
 			return
 	
 	var auth_url : String
+	if GOOGLE_CLIENT_ID.is_empty() or GOOGLE_CLIENT_ID == "YOUR_GOOGLE_CLIENT_ID":
+		login_failed.emit("Google Client ID is missing. Check secrets.cfg or BAKED_SECRETS.")
+		print("[AuthManager] ERROR: Cannot start Google OAuth. GOOGLE_CLIENT_ID is empty.")
+		return
+
 	auth_url = GOOGLE_AUTH_URL + "?client_id=" + GOOGLE_CLIENT_ID.uri_encode() + "&redirect_uri=" + redirect_uri.uri_encode() + "&response_type=code&scope=" + GOOGLE_SCOPES.uri_encode() + "&state=" + _oauth_state + "&access_type=offline&prompt=select_account"
 
-	OS.shell_open(auth_url)
+	print("[AuthManager] PC: Opening browser with direct Google URL: ", auth_url)
+	DisplayServer.clipboard_set(auth_url)
+	
+	var err = OS.shell_open(auth_url)
+	if err != OK:
+		login_failed.emit("Could not open browser. Please paste the URL from your clipboard.")
+	
 	oauth_login_started.emit(provider)
 
 func _on_oauth_code_received(code: String, _state: String) -> void:
 	var url : String; var body : String
 	var redirect_uri = _get_redirect_uri()
 	
+	# Google Token Exchange requires ALL parameters to be URI encoded in the x-www-form-urlencoded body.
+	# Missing encoding for client_id, client_secret, or redirect_uri is a common cause for 401/400 errors.
 	url = GOOGLE_TOKEN_URL
-	body = "code=" + code.uri_encode() + "&client_id=" + GOOGLE_CLIENT_ID + "&client_secret=" + GOOGLE_CLIENT_SECRET + "&redirect_uri=" + redirect_uri + "&grant_type=authorization_code"
+	body = "code=" + code.uri_encode() + \
+		"&client_id=" + GOOGLE_CLIENT_ID.uri_encode() + \
+		"&client_secret=" + GOOGLE_CLIENT_SECRET.uri_encode() + \
+		"&redirect_uri=" + redirect_uri.uri_encode() + \
+		"&grant_type=authorization_code"
 	
+	print("[AuthManager] Exchanging OAuth code for token. Redirect URI: ", redirect_uri)
 	_oauth_http.request(url, ["Content-Type: application/x-www-form-urlencoded"], HTTPClient.METHOD_POST, body)
 
 func _on_oauth_completed(result: int, status_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
@@ -297,71 +340,53 @@ func _on_oauth_completed(result: int, status_code: int, _headers: PackedStringAr
 		
 	var body_str = body.get_string_from_utf8()
 	var response = JSON.parse_string(body_str)
+	
 	if response == null:
 		login_failed.emit("OAuth Token Exchange Failed: Invalid server response format (Code: %d)" % status_code)
 		print("[AuthManager] OAuth JSON Parse Error. Raw body: ", body_str)
 		return
-	if status_code >= 200 and status_code < 300 and response is Dictionary and response.has("access_token"):
-		var token = response.get("access_token", "")
-		_fetch_oauth_user_info(token)
-	else:
-		login_failed.emit("OAuth Token Exchange Failed: " + _extract_error(response))
-
-func _fetch_oauth_user_info(token: String) -> void:
-	var url = GOOGLE_USERINFO_URL
-	var headers = ["Authorization: Bearer " + token]
-	_oauth_http.request(url, headers, HTTPClient.METHOD_GET)
-	_oauth_http.request_completed.disconnect(_on_oauth_completed)
-	_oauth_http.request_completed.connect(_on_oauth_userinfo_completed, CONNECT_ONE_SHOT)
-
-func _on_oauth_userinfo_completed(_result: int, status_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
-	_oauth_http.request_completed.connect(_on_oauth_completed)
-	var response = JSON.parse_string(body.get_string_from_utf8())
-	if response == null:
-		login_failed.emit("OAuth User Info Failed: Invalid JSON")
-		return
-	
-	if status_code >= 200 and status_code < 300 and response is Dictionary:
-		current_user["email"] = response.get("email", "")
-		current_user["display_name"] = response.get("name", "")
-		user_id = response.get("id", response.get("sub", ""))
-		current_user["id"] = user_id
-		access_token = "oauth_dummy_token" # Placeholder for manual flow
 		
-		var url = SUPABASE_URL + REST_PROFILES + "?id=eq." + user_id + "&select=*"
-		var temp_http = HTTPRequest.new()
-		add_child(temp_http)
-		temp_http.request_completed.connect(func(r, sc, h, b):
-			_on_oauth_db_check_completed(r, sc, h, b)
-			temp_http.queue_free()
-		)
-		_send_request(temp_http, url, _get_headers(), HTTPClient.METHOD_GET)
+	# CRITICAL FIX: To integrate properly with Supabase, we MUST exchange the Google ID token
+	# for a Supabase session rather than trying to use a Google token against the Supabase DB.
+	if status_code >= 200 and status_code < 300 and response is Dictionary and response.has("id_token"):
+		var id_token = response.get("id_token", "")
+		print("[AuthManager] Exchanging Google ID token with Supabase...")
+		var sb_body = { "provider": "google", "id_token": id_token }
+		# Send this to _auth_http so the standard Supabase pipeline (_on_auth_completed -> _handle_auth_success -> fetch_profile) takes over.
+		_send_request(_auth_http, SUPABASE_URL + "/auth/v1/token?grant_type=id_token", _get_headers(), HTTPClient.METHOD_POST, sb_body)
 	else:
-		login_failed.emit("OAuth User Info Failed")
-
-func _on_oauth_db_check_completed(_result: int, status_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
-	var response = JSON.parse_string(body.get_string_from_utf8())
-	if response == null:
-		login_failed.emit("Database error: Invalid JSON")
-		return
-	
-	if status_code >= 200 and status_code < 300 and response is Array and response.size() > 0:
-		for key in response[0]:
-			current_user[key] = response[0][key]
-		is_new_user = false
-		login_success.emit(current_user)
-	else:
-		is_new_user = true
-		login_success.emit(current_user)
+		var error_msg = _extract_error(response)
+		# Provide more context for 401 errors specifically
+		if status_code == 401:
+			error_msg = "401 Unauthorized: Check if Client Secret and Redirect URI match Google Console settings. (" + error_msg + ")"
+		
+		login_failed.emit("OAuth Token Exchange Failed: " + error_msg)
+		print("[AuthManager] OAuth Error Response (", status_code, "): ", body_str)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Internal Handlers
 # ══════════════════════════════════════════════════════════════════════════════
-func _on_auth_completed(_result: int, status_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
-	var response = JSON.parse_string(body.get_string_from_utf8())
+func _on_auth_completed(result: int, status_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
+	var body_str = body.get_string_from_utf8()
+	var response = JSON.parse_string(body_str)
+	
 	if response == null:
-		_handle_auth_failure({"message": "Invalid JSON response from server"}, status_code)
+		# Android Debugging: If parsing fails, it's often because of a network error or an HTML error page.
+		var snippet = body_str.left(500).replace("\n", " ")
+		print("[AuthManager] JSON Parse Error! Status: ", status_code, " Result: ", result)
+		print("[AuthManager] Raw Body Snippet: ", snippet)
+		
+		var fail_reason = "Invalid JSON format from server."
+		if status_code == 0:
+			fail_reason = "Network error: Connection failed. Check Android Internet permissions or DNS."
+		elif status_code == 403:
+			fail_reason = "403 Forbidden: Possible WAF or regional block."
+		elif body_str.to_lower().contains("<html"):
+			fail_reason = "Received HTML instead of JSON. (Possible Captive Portal or Server Error)"
+			
+		_handle_auth_failure({"message": fail_reason}, status_code)
 		return
+		
 	if status_code >= 200 and status_code < 300:
 		if response is Dictionary and response.has("id") and !response.has("access_token"):
 			password_changed.emit()
@@ -388,10 +413,15 @@ func _handle_auth_success(response: Dictionary) -> void:
 	if !access_token.is_empty():
 		expires_at = int(Time.get_unix_time_from_system()) + int(response.get("expires_in", 3600))
 		_save_session(); _schedule_refresh(response.get("expires_in", 3600))
-		if is_new_user: signup_success.emit(current_user)
-		else: fetch_profile()
-	elif is_new_user: signup_success.emit(current_user)
-	is_new_user = false
+		
+		# Always fetch profile to verify if this is an existing user or a new one.
+		# _on_db_completed will handle setting is_new_user based on the DB result.
+		fetch_profile()
+	elif is_new_user: 
+		signup_success.emit(current_user)
+	
+	# We don't reset is_new_user to false here anymore, 
+	# as _on_db_completed will determine the final state.
 
 func _handle_auth_failure(response: Variant, status_code: int) -> void:
 	var error_msg = _extract_error(response)
@@ -414,27 +444,35 @@ func _on_otp_completed(_result: int, status_code: int, _headers: PackedStringArr
 		else: reset_code_send_failed.emit(error)
 
 func _on_db_completed(_result: int, status_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
-	var response = JSON.parse_string(body.get_string_from_utf8())
-	print("[AuthManager] DB request completed. Status: ", status_code, " Body: ", body.get_string_from_utf8())
+	var body_str = body.get_string_from_utf8()
+	var response = JSON.parse_string(body_str)
+	print("[AuthManager] DB request completed. Status: ", status_code, " Body: ", body_str)
+	
 	if response == null:
 		login_failed.emit("Database error: Invalid JSON response")
 		return
 	
 	if status_code >= 200 and status_code < 300:
 		if response is Array and response.size() > 0:
+			# PROFILE FOUND: User exists in our system
 			for key in response[0]: 
-				# Ensure types are correct for certain keys
 				if key == "avatar_credits":
 					current_user[key] = int(response[0][key])
 				else:
 					current_user[key] = response[0][key]
+			is_new_user = false
+		else:
+			# PROFILE NOT FOUND: This is a new user who just authenticated via OAuth
+			is_new_user = true
+			# We don't emit login_success yet if we want to handle them as new
 		
 		# If we have an active session, save the fresh DB data
 		if not access_token.is_empty():
 			_save_session()
 			
 		login_success.emit(current_user)
-	else: login_failed.emit("Database error: " + _extract_error(response))
+	else: 
+		login_failed.emit("Database error: " + _extract_error(response))
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Helpers

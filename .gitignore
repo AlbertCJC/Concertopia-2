@@ -12,7 +12,9 @@ export_presets.cfg
 secrets.cfg
 secrets.env
 
-# Android auto-generated build output
+# Android Keystores & Build Output
+*.keystore
+*.jks
 android/
 
     # OS

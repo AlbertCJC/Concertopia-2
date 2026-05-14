@@ -13,7 +13,9 @@ config_version=5
 config/name="Concertopia"
 run/main_scene="res://screens/bootstrap.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
-config/icon="res://icons/icon.svg"
+boot_splash/use_filter=false
+boot_splash/image="uid://bcqsjxeb5ffjg"
+config/icon="res://icons/Concertopia.png"
 
 [autoload]
 
@@ -24,6 +26,14 @@ RoomRegistry="*res://scripts/room_registry.gd"
 OAuthServer="*res://scripts/oauth_server.gd"
 AudioManager="*res://scripts/audio_manager.gd"
 UIUtils="*res://scripts/ui_utils.gd"
+
+[boot_splash]
+
+bg_color=Color(0.06, 0.04, 0.14, 1)
+show_image=false
+fullsize=false
+use_filter=true
+image="res://icons/Concertopia.png"
 
 [display]
 

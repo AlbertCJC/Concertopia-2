@@ -1,8 +1,8 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://dag12qsttv7uf"]
 
-[ext_resource type="Script" path="res://scripts/avatar_generation.gd" id="1_avatar"]
+[ext_resource type="Script" uid="uid://bi5etp3mvfyif" path="res://scripts/avatar_generation.gd" id="1_avatar"]
 
-[node name="AvatarGeneration" type="Control"]
+[node name="AvatarGeneration" type="Control" unique_id=609628467]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
